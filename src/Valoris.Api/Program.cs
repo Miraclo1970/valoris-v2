@@ -17,8 +17,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ValorisDbContext>();
     db.Database.Migrate();
-    if (app.Environment.IsDevelopment())
-        await DataSeeder.SeedAsync(db);
+    await DataSeeder.SeedAsync(db);
 }
 
 if (app.Environment.IsDevelopment())

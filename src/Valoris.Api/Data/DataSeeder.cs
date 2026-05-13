@@ -12,11 +12,15 @@ public static class DataSeeder
         await PatchIconenAsync(db);
         await PatchBehandelingAsync(db);
 
-        // Rol-tabel vullen (hardcoded waarden) + gebruikers — altijd draaien
+        // Rol-tabel vullen (hardcoded waarden) — altijd draaien
         await SeedRollenAsync(db);
-        await SeedGebruikersAsync(db);
 
-        if (await db.Domeinen.AnyAsync()) return;
+        if (await db.Domeinen.AnyAsync())
+        {
+            // Domeinen bestaan al — alleen gebruikers aanvullen indien nodig
+            await SeedGebruikersAsync(db);
+            return;
+        }
 
         // --- Periodes: Q1-Q4 2025 + Q1 2026 ---
         var periodes = new[]
@@ -28,15 +32,6 @@ public static class DataSeeder
             new Periode { Startdatum = new DateTime(2026, 1, 1),  Einddatum = new DateTime(2026, 3, 31),  Type = PeriodeType.Kwartaal },
         };
         db.Periodes.AddRange(periodes);
-
-        // --- Rollen ---
-        var rollen = new[]
-        {
-            new Rol { Naam = "beheerder" },
-            new Rol { Naam = "redacteur" },
-            new Rol { Naam = "lezer" },
-        };
-        db.Rollen.AddRange(rollen);
 
         // --- Domein ---
         var domein = new Domein
@@ -188,7 +183,8 @@ public static class DataSeeder
 
         await db.SaveChangesAsync();
 
-        // (gebruikers worden bovenaan geseed, na SaveChanges zijn alle IDs beschikbaar)
+        // Gebruikers seeden nu domeinen en rollen beschikbaar zijn
+        await SeedGebruikersAsync(db);
     }
 
     private static async Task SeedRollenAsync(ValorisDbContext db)
