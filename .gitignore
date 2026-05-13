@@ -1,0 +1,19 @@
+# Secrets & local config
+.env
+appsettings.Development.json
+
+# .NET build output
+**/bin/
+**/obj/
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# macOS
+.DS_Store
