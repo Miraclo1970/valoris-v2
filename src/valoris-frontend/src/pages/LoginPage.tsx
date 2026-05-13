@@ -6,12 +6,13 @@ import '../styles/global.css';
 
 export function LoginPage() {
   const { user, login } = useAuth();
-  if (user) return <Navigate to="/" replace />;
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [wachtwoord, setWachtwoord] = useState('');
   const [fout, setFout] = useState('');
   const [bezig, setBezig] = useState(false);
+
+  if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
