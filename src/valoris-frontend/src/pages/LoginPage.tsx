@@ -44,9 +44,6 @@ export function LoginPage() {
             {bezig ? 'Bezig…' : 'Inloggen'}
           </button>
         </form>
-        <p style={{ marginTop: 'var(--space-5)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-          Demo — admin@valoris.nl / admin · redacteur@valoris.nl / redacteur · lezer@valoris.nl / lezer
-        </p>
       </div>
     </div>
   );
