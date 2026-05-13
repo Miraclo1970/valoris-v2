@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
 export type Rol = 'beheerder' | 'redacteur' | 'lezer';
 
@@ -14,6 +14,7 @@ interface AuthContextValue {
   login: (user: AuthUser) => void;
   logout: () => void;
   hasRole: (rol: Rol, domeinId?: number) => boolean;
+  refreshRollen: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -45,8 +46,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  // Haal verse rollen op voor de ingelogde gebruiker (bijv. na domein-koppeling)
+  const refreshRollen = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await fetch(`/api/gebruikers/${user.id}/rollen`);
+      if (!res.ok) return;
+      const rollen: { domeinId: number; rol: Rol }[] = await res.json();
+      const bijgewerkt = { ...user, rollen };
+      sessionStorage.setItem('valoris_user', JSON.stringify(bijgewerkt));
+      setUser(bijgewerkt);
+    } catch { /* stil falen */ }
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, login, logout, hasRole, refreshRollen }}>
       {children}
     </AuthContext.Provider>
   );

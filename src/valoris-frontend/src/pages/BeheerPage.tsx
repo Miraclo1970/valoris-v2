@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../components/AuthContext';
 import {
   getDomeinen, createDomein, updateDomein,
   getZaaksoorten, createZaaksoort, updateZaaksoort,
@@ -433,6 +434,7 @@ function PeriodesTab() {
 const ROLLEN = ['beheerder', 'redacteur', 'lezer'];
 
 function GebruikersTab() {
+  const { user, refreshRollen } = useAuth();
   const [gebruikers, setGebruikers] = useState<GebruikerDetail[]>([]);
   const [domeinen, setDomeinen] = useState<Domein[]>([]);
   const [adding, setAdding] = useState(false);
@@ -458,13 +460,18 @@ function GebruikersTab() {
 
   const saveRol = async (gebruikerId: number) => {
     setSaving(true);
-    try { await koppelRol(gebruikerId, rolForm.domeinId, rolForm.rol); await load(); }
-    finally { setSaving(false); }
+    try {
+      await koppelRol(gebruikerId, rolForm.domeinId, rolForm.rol);
+      await load();
+      // Als de gekoppelde gebruiker de ingelogde gebruiker is, ververs de sessie
+      if (gebruikerId === user?.id) await refreshRollen();
+    } finally { setSaving(false); }
   };
 
   const verwijderRol = async (gebruikerId: number, rolId: number) => {
     await ontkoppelRol(gebruikerId, rolId);
     await load();
+    if (gebruikerId === user?.id) await refreshRollen();
   };
 
   const resetWachtwoord = async (gebruikerId: number) => {

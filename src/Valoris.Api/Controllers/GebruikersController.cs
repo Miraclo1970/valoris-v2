@@ -65,6 +65,17 @@ public class GebruikersController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("{id}/rollen")]
+    public async Task<IActionResult> GetRollen(int id)
+    {
+        var rollen = await _db.GebruikerDomeinRollen
+            .Where(r => r.GebruikerId == id)
+            .Include(r => r.Rol)
+            .Select(r => new { domeinId = r.DomeinId, rol = r.Rol.Naam })
+            .ToListAsync();
+        return Ok(rollen);
+    }
+
     [HttpPost("{id}/rollen")]
     public async Task<IActionResult> KoppelRol(int id, [FromBody] RolKoppeling body)
     {
