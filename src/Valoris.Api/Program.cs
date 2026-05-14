@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Valoris.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +12,26 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ValorisDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// JWT authenticatie
+var jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? "valoris-jwt-dev-secret-key-min32chars!!";
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opts =>
+    {
+        opts.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key,
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero,
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -27,6 +50,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

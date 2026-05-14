@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
@@ -8,6 +9,7 @@ namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api")]
+[Authorize]
 public class VeranderimpactController : ControllerBase
 {
     private readonly ValorisDbContext _db;
@@ -30,6 +32,7 @@ public class VeranderimpactController : ControllerBase
     }
 
     [HttpPost("veranderimpact")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Create(VeranderimpactCreateDto dto)
     {
         if (!Enum.TryParse<ImpactType>(dto.Type, ignoreCase: true, out var type))
@@ -49,6 +52,7 @@ public class VeranderimpactController : ControllerBase
     }
 
     [HttpPut("veranderimpact/{id}")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Update(int id, VeranderimpactUpdateDto dto)
     {
         var impact = await _db.Veranderimpacten.FindAsync(id);
@@ -64,6 +68,7 @@ public class VeranderimpactController : ControllerBase
     }
 
     [HttpDelete("veranderimpact/{id}")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Delete(int id)
     {
         var impact = await _db.Veranderimpacten.FindAsync(id);

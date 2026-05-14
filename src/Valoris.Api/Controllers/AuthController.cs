@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Valoris.Api.Data;
 using Valoris.Api.Services;
 
@@ -10,8 +14,13 @@ namespace Valoris.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly ValorisDbContext _db;
+    private readonly IConfiguration _config;
 
-    public AuthController(ValorisDbContext db) => _db = db;
+    public AuthController(ValorisDbContext db, IConfiguration config)
+    {
+        _db = db;
+        _config = config;
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest body)
@@ -30,12 +39,35 @@ public class AuthController : ControllerBase
             rol = r.Rol.Naam,
         }).ToList();
 
+        // JWT token aanmaken
+        var secret = _config["Jwt:Secret"] ?? "valoris-jwt-dev-secret-key-min32chars!!";
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, gebruiker.Id.ToString()),
+            new(ClaimTypes.Name, gebruiker.Email),
+        };
+
+        // Voeg alle unieke rollen toe als claims (over alle domeinen heen)
+        foreach (var rol in rollen.Select(r => r.rol).Distinct())
+            claims.Add(new Claim(ClaimTypes.Role, rol));
+
+        var token = new JwtSecurityToken(
+            expires: DateTime.UtcNow.AddDays(7),
+            signingCredentials: creds,
+            claims: claims
+        );
+        var tokenStr = new JwtSecurityTokenHandler().WriteToken(token);
+
         return Ok(new
         {
             id = gebruiker.Id,
             naam = gebruiker.Naam,
             email = gebruiker.Email,
             rollen,
+            token = tokenStr,
         });
     }
 }

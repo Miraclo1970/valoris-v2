@@ -7,6 +7,7 @@ interface AuthUser {
   naam: string;
   email: string;
   rollen: { domeinId: number; rol: Rol }[];
+  token: string;
 }
 
 interface AuthContextValue {

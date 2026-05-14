@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
@@ -8,6 +9,7 @@ namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api/periodes")]
+[Authorize]
 public class PeriodesController : ControllerBase
 {
     private readonly ValorisDbContext _db;
@@ -25,6 +27,7 @@ public class PeriodesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> Create([FromBody] PeriodeCreate body)
     {
         if (!Enum.TryParse<PeriodeType>(body.Type, true, out var type))
@@ -42,6 +45,7 @@ public class PeriodesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> Update(int id, [FromBody] PeriodeCreate body)
     {
         var periode = await _db.Periodes.FindAsync(id);

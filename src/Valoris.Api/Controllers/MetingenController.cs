@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
@@ -8,6 +9,7 @@ namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api")]
+[Authorize]
 public class MetingenController : ControllerBase
 {
     private readonly ValorisDbContext _db;
@@ -30,6 +32,7 @@ public class MetingenController : ControllerBase
     }
 
     [HttpPost("metingen")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Create(MetingCreateDto dto)
     {
         var meting = new Meting
@@ -46,6 +49,7 @@ public class MetingenController : ControllerBase
     }
 
     [HttpPut("metingen/{id}")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Update(int id, MetingUpdateDto dto)
     {
         var meting = await _db.Metingen.FindAsync(id);

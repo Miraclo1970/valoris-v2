@@ -1,10 +1,24 @@
 const BASE = '/api';
 
+function getToken(): string | null {
+  try {
+    const stored = sessionStorage.getItem('valoris_user');
+    return stored ? JSON.parse(stored).token ?? null : null;
+  } catch { return null; }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
+  const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   const res = await fetch(BASE + path, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: { 'Content-Type': 'application/json', ...authHeader, ...init?.headers },
     ...init,
   });
+  if (res.status === 401) {
+    sessionStorage.removeItem('valoris_user');
+    window.location.href = '/login';
+    throw new Error('Sessie verlopen');
+  }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   if (res.status === 204) return undefined as T;
   return res.json();
@@ -38,9 +52,10 @@ export const updateVerandering = (id: number, body: VeranderingUpdate) => reques
 export const importVeranderingenCsv = (domeinId: number, file: File) => {
   const form = new FormData();
   form.append('file', file);
+  const token = getToken();
   return request<{ imported: number; warnings: string[] }>(`/veranderingen/import-csv?domeinId=${domeinId}`, {
     method: 'POST',
-    headers: {},
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: form,
   });
 };
@@ -64,7 +79,7 @@ export const updatePeriode = (id: number, body: PeriodeCreate) => request<void>(
 
 // --- Auth ---
 export const login = (email: string, wachtwoord: string) =>
-  request<{ id: number; naam: string; email: string; rollen: { domeinId: number; rol: string }[] }>(
+  request<{ id: number; naam: string; email: string; rollen: { domeinId: number; rol: string }[]; token: string }>(
     '/auth/login', { method: 'POST', body: JSON.stringify({ email, wachtwoord }) });
 
 // --- Gebruikers ---

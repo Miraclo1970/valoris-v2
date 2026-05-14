@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
@@ -8,6 +9,7 @@ namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api/gebruikers")]
+[Authorize(Roles = "beheerder")]
 public class GebruikersController : ControllerBase
 {
     private readonly ValorisDbContext _db;
@@ -66,6 +68,7 @@ public class GebruikersController : ControllerBase
     }
 
     [HttpGet("{id}/rollen")]
+    [Authorize]  // alle ingelogde gebruikers mogen eigen rollen ophalen
     public async Task<IActionResult> GetRollen(int id)
     {
         var rollen = await _db.GebruikerDomeinRollen

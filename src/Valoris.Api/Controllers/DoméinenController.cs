@@ -1,13 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
 using Valoris.Api.Data.Entities;
+using Valoris.Api.Helpers;
 using Valoris.Api.Models;
 
 namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api/domeinen")]
+[Authorize]
 public class DoméinenController : ControllerBase
 {
     private readonly ValorisDbContext _db;
@@ -28,6 +31,7 @@ public class DoméinenController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> Create([FromBody] DomeinCreate body)
     {
         if (!Enum.TryParse<PeriodeType>(body.Basisperiode, true, out var periodeType))
@@ -47,6 +51,7 @@ public class DoméinenController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> Update(int id, [FromBody] DomeinCreate body)
     {
         var domein = await _db.Domeinen.FindAsync(id);
@@ -63,6 +68,7 @@ public class DoméinenController : ControllerBase
     }
 
     [HttpPost("{id}/zaaksoorten")]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> CreateZaaksoort(int id, [FromBody] ZaaksoortCreate body)
     {
         if (!await _db.Domeinen.AnyAsync(d => d.Id == id)) return NotFound();
@@ -86,6 +92,7 @@ public class DoméinenController : ControllerBase
     }
 
     [HttpPut("{id}/zaaksoorten/{zaaksoortId}")]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> UpdateZaaksoort(int id, int zaaksoortId, [FromBody] ZaaksoortCreate body)
     {
         var z = await _db.Zaaksoorten.FirstOrDefaultAsync(z => z.Id == zaaksoortId && z.DomeinId == id);
@@ -146,6 +153,7 @@ public class DoméinenController : ControllerBase
     }
 
     [HttpPost("{id}/indicatoren")]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> KoppelIndicator(int id, [FromBody] DomeinIndicatorCreate body)
     {
         if (!await _db.Domeinen.AnyAsync(d => d.Id == id)) return NotFound();
@@ -164,6 +172,7 @@ public class DoméinenController : ControllerBase
     }
 
     [HttpDelete("{id}/indicatoren/{domeinIndicatorId}")]
+    [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> OntkoppelIndicator(int id, int domeinIndicatorId)
     {
         var di = await _db.DomeinIndicatoren
@@ -183,14 +192,14 @@ public class DoméinenController : ControllerBase
         var indicatoren = await _db.DomeinIndicatoren
             .Where(di => di.DomeinId == id && di.Actief)
             .Include(di => di.Indicator)
-            .Select(di => new DomeinIndicatorDto(
-                di.Id, di.DomeinId, di.IndicatorId,
-                di.Indicator.Naam,
-                di.Indicator.Type.ToString().ToLower(),
-                di.Indicator.Eenheid,
-                di.Indicator.Aggregatiewijze.ToString().ToLower(),
-                di.Actief))
             .ToListAsync();
-        return Ok(indicatoren);
+
+        return Ok(indicatoren.Select(di => new DomeinIndicatorDto(
+            di.Id, di.DomeinId, di.IndicatorId,
+            di.Indicator.Naam,
+            di.Indicator.Type.ToString().ToLower(),
+            di.Indicator.Eenheid,
+            AggHelper.ToString(di.Indicator.Aggregatiewijze),
+            di.Actief)));
     }
 }

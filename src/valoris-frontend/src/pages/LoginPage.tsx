@@ -19,7 +19,7 @@ export function LoginPage() {
     setBezig(true); setFout('');
     try {
       const data = await apiLogin(email, wachtwoord);
-      login({ id: data.id, naam: data.naam, email: data.email, rollen: data.rollen as { domeinId: number; rol: Rol }[] });
+      login({ id: data.id, naam: data.naam, email: data.email, rollen: data.rollen as { domeinId: number; rol: Rol }[], token: data.token });
       navigate('/');
     } catch {
       setFout('Onbekend e-mailadres of wachtwoord.');

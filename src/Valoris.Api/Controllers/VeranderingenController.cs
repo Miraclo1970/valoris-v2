@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
@@ -8,6 +9,7 @@ namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api")]
+[Authorize]
 public class VeranderingenController : ControllerBase
 {
     private readonly ValorisDbContext _db;
@@ -33,6 +35,7 @@ public class VeranderingenController : ControllerBase
     }
 
     [HttpPost("veranderingen")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Create(VeranderingCreateDto dto)
     {
         if (!Enum.TryParse<VeranderingType>(dto.Type, ignoreCase: true, out var type))
@@ -58,6 +61,7 @@ public class VeranderingenController : ControllerBase
     }
 
     [HttpPut("veranderingen/{id}")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Update(int id, VeranderingUpdateDto dto)
     {
         var verandering = await _db.Veranderingen.FindAsync(id);
@@ -82,6 +86,7 @@ public class VeranderingenController : ControllerBase
 
     [HttpPost("veranderingen/import-csv")]
     [Consumes("multipart/form-data")]
+    [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> ImportCsv(IFormFile file, [FromQuery] int domeinId)
     {
         if (!await _db.Domeinen.AnyAsync(d => d.Id == domeinId))

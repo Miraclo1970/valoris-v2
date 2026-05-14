@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
@@ -8,6 +9,7 @@ namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api/domeinen/{domeinId}/strategie")]
+[Authorize]
 public class StrategieController : ControllerBase
 {
     private readonly ValorisDbContext _db;
