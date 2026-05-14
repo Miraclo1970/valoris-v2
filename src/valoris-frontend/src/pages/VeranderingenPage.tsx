@@ -4,9 +4,9 @@ import {
   getVeranderingen, createVerandering, updateVerandering, importVeranderingenCsv,
   getZaaksoorten, getIndicatoren, getMetingsdoelen, getVeranderimpact,
   createVeranderimpact, updateVeranderimpact, deleteVeranderimpact,
-  getHuidigePeride,
+  getHuidigePeride, getMetingen,
   type Verandering, type VeranderingCreate, type Zaaksoort,
-  type DomeinIndicator, type Metingsdoel, type Veranderimpact,
+  type DomeinIndicator, type Metingsdoel, type Veranderimpact, type Meting,
 } from '../api/client';
 import { Modal } from '../components/Modal';
 import './VeranderingenPage.css';
@@ -43,6 +43,7 @@ export function VeranderingenPage() {
   const [indicatoren, setIndicatoren] = useState<DomeinIndicator[]>([]);
   const [metingsdoelen, setMetingsdoelen] = useState<Metingsdoel[]>([]);
   const [impacts, setImpacts] = useState<Veranderimpact[]>([]);
+  const [metingen, setMetingen] = useState<Meting[]>([]);
   const [huidigePeriodeId, setHuidigePeriodeId] = useState<number | null>(null);
 
   const [selectedVeranderingId, setSelectedVeranderingId] = useState<number | null>(null);
@@ -56,12 +57,13 @@ export function VeranderingenPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const laad = async () => {
-    const [v, z, i, m, imp, p] = await Promise.all([
+    const [v, z, i, m, imp, mt, p] = await Promise.all([
       getVeranderingen(id),
       getZaaksoorten(id),
       getIndicatoren(id),
       getMetingsdoelen(id),
       getVeranderimpact(id),
+      getMetingen(id),
       getHuidigePeride(id),
     ]);
     setVeranderingen(v);
@@ -69,6 +71,7 @@ export function VeranderingenPage() {
     setIndicatoren(i);
     setMetingsdoelen(m);
     setImpacts(imp);
+    setMetingen(mt);
     setHuidigePeriodeId(p.id);
   };
 
@@ -159,9 +162,21 @@ export function VeranderingenPage() {
 
   const setF = (k: keyof VeranderingCreate, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 
-  // Indicatoren per type
-  const prestatieIndicatoren = indicatoren.filter(i => i.type === 'prestatie');
-  const inrichtingIndicatoren = indicatoren.filter(i => i.type === 'inrichting');
+  // Alleen indicatoren met een metingsdoel voor de geselecteerde zaaksoort
+  const doelsVoorZaaksoort = selectedZaaksoortId
+    ? metingsdoelen.filter(m => m.zaaksoortId === selectedZaaksoortId)
+    : [];
+  const relevanteIndicatorIds = new Set(doelsVoorZaaksoort.map(m => m.domeinIndicatorId));
+
+  const prestatieIndicatoren = indicatoren.filter(i => i.type === 'prestatie' && relevanteIndicatorIds.has(i.id));
+  const inrichtingIndicatoren = indicatoren.filter(i => i.type === 'inrichting' && relevanteIndicatorIds.has(i.id));
+
+  // IST-waarde (huidige periode)
+  const istWaarde = (doelId: number): number | null => {
+    if (!huidigePeriodeId) return null;
+    const m = metingen.find(mt => mt.metingsdoelId === doelId && mt.periodeId === huidigePeriodeId);
+    return m?.waarde ?? null;
+  };
 
   return (
     <div className="vp-root">
@@ -279,6 +294,7 @@ export function VeranderingenPage() {
                         zaaksoortId={selectedZaaksoortId}
                         impactVoorDoel={impactVoorDoel}
                         doelVoorZaaksoortEnIndicator={doelVoorZaaksoortEnIndicator}
+                        istWaarde={istWaarde}
                         editingImpact={editingImpact}
                         setEditingImpact={setEditingImpact}
                         slaImpactOp={slaImpactOp}
@@ -292,6 +308,7 @@ export function VeranderingenPage() {
                         zaaksoortId={selectedZaaksoortId}
                         impactVoorDoel={impactVoorDoel}
                         doelVoorZaaksoortEnIndicator={doelVoorZaaksoortEnIndicator}
+                        istWaarde={istWaarde}
                         editingImpact={editingImpact}
                         setEditingImpact={setEditingImpact}
                         slaImpactOp={slaImpactOp}
@@ -366,13 +383,14 @@ interface IndicatorGroepProps {
   zaaksoortId: number;
   impactVoorDoel: (id: number) => Veranderimpact | undefined;
   doelVoorZaaksoortEnIndicator: (zaaksoortId: number, domeinIndicatorId: number) => Metingsdoel | undefined;
+  istWaarde: (doelId: number) => number | null;
   editingImpact: { doelId: number; waarde: string } | null;
   setEditingImpact: (v: { doelId: number; waarde: string } | null) => void;
   slaImpactOp: (doelId: number, waarde: string) => Promise<void>;
   verwijderImpact: (doelId: number) => Promise<void>;
 }
 
-function IndicatorGroep({ label, indicatoren, zaaksoortId, impactVoorDoel, doelVoorZaaksoortEnIndicator, editingImpact, setEditingImpact, slaImpactOp, verwijderImpact }: IndicatorGroepProps) {
+function IndicatorGroep({ label, indicatoren, zaaksoortId, impactVoorDoel, doelVoorZaaksoortEnIndicator, istWaarde, editingImpact, setEditingImpact, slaImpactOp, verwijderImpact }: IndicatorGroepProps) {
   return (
     <div className="ind-groep">
       <p className="vp-section-label">{label}</p>
@@ -380,30 +398,36 @@ function IndicatorGroep({ label, indicatoren, zaaksoortId, impactVoorDoel, doelV
         const doel = doelVoorZaaksoortEnIndicator(zaaksoortId, ind.id);
         const imp = doel ? impactVoorDoel(doel.id) : undefined;
         const editing = doel && editingImpact?.doelId === doel.id;
+        const ist = doel ? istWaarde(doel.id) : null;
 
         return (
-          <div key={ind.id} className={`ind-rij ${imp ? 'heeft-impact' : ''} ${!doel ? 'geen-doel' : ''}`}>
+          <div key={ind.id} className={`ind-rij ${imp ? 'heeft-impact' : ''}`}>
             <div className="ind-dot" style={{ background: imp ? (imp.waarde >= 0 ? 'var(--color-success)' : 'var(--color-danger)') : 'var(--color-border)' }} />
-            <span className="ind-naam">{ind.indicatorNaam}</span>
+            <span className="ind-naam">
+              {ind.indicatorNaam}
+              {ist !== null && (
+                <span className="ind-ist" title="Huidige meetwaarde">
+                  {ist} {ind.eenheid}
+                </span>
+              )}
+            </span>
             <div className="ind-waarde">
-              {!doel ? (
-                <span className="ind-geen-doel" title="Geen norm ingesteld voor deze zaaksoort — stel eerst een metingsdoel in via Inrichting">niet ingesteld</span>
-              ) : editing ? (
+              {editing ? (
                 <input
                   className="ind-input"
                   autoFocus
                   defaultValue={imp?.waarde ?? ''}
-                  placeholder={`waarde (${ind.eenheid})`}
-                  onKeyDown={e => { if (e.key === 'Enter') slaImpactOp(doel.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setEditingImpact(null); }}
-                  onBlur={e => slaImpactOp(doel.id, e.target.value)}
+                  placeholder={`verwachte Δ (${ind.eenheid})`}
+                  onKeyDown={e => { if (e.key === 'Enter') slaImpactOp(doel!.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setEditingImpact(null); }}
+                  onBlur={e => slaImpactOp(doel!.id, e.target.value)}
                 />
               ) : imp ? (
-                <span className="ind-badge" onClick={() => setEditingImpact({ doelId: doel.id, waarde: String(imp.waarde) })} title="Klik om te bewerken">
+                <span className="ind-badge" onClick={() => setEditingImpact({ doelId: doel!.id, waarde: String(imp.waarde) })} title="Klik om te bewerken">
                   <ImpactBadge waarde={imp.waarde} eenheid={ind.eenheid} />
                 </span>
-              ) : (
-                <button className="ind-toevoegen" onClick={() => setEditingImpact({ doelId: doel.id, waarde: '' })}>—</button>
-              )}
+              ) : doel ? (
+                <button className="ind-toevoegen" onClick={() => setEditingImpact({ doelId: doel.id, waarde: '' })}>+ impact</button>
+              ) : null}
               {doel && imp && !editing && (
                 <button className="ind-delete" onClick={() => verwijderImpact(doel.id)} title="Verwijder impact">×</button>
               )}
