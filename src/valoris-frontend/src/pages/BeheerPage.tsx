@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import {
   getDomeinen, createDomein, updateDomein,
@@ -40,26 +41,26 @@ function periodeLabel(p: HuidigePeriode) {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function DomeinenTab() {
+  const navigate = useNavigate();
   const [domeinen, setDomeinen] = useState<Domein[]>([]);
   const [editing, setEditing] = useState<Domein | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<DomeinCreate>({ naam: '', omschrijving: '', basisperiode: 'kwartaal', interventiedrempel: 60 });
   const [saving, setSaving] = useState(false);
+  const [nieuwId, setNieuwId] = useState<number | null>(null);
 
   const load = () => getDomeinen().then(setDomeinen);
   useEffect(() => { load(); }, []);
 
-  const openAdd = () => { setAdding(true); setEditing(null); setForm({ naam: '', omschrijving: '', basisperiode: 'kwartaal', interventiedrempel: 60 }); };
+  const openAdd = () => { setAdding(true); setEditing(null); setNieuwId(null); setForm({ naam: '', omschrijving: '', basisperiode: 'kwartaal', interventiedrempel: 60 }); };
   const openEdit = (d: Domein) => { setEditing(d); setAdding(false); setForm({ naam: d.naam, omschrijving: d.omschrijving, basisperiode: d.basisperiode, interventiedrempel: Number(d.interventiedrempel) }); };
   const cancel = () => { setAdding(false); setEditing(null); };
 
   const save = async () => {
     setSaving(true);
     try {
-      if (editing) await updateDomein(editing.id, form);
-      else await createDomein(form);
-      await load();
-      cancel();
+      if (editing) { await updateDomein(editing.id, form); await load(); cancel(); }
+      else { const id = await createDomein(form); await load(); setAdding(false); setNieuwId(id); }
     } finally { setSaving(false); }
   };
 
@@ -100,6 +101,16 @@ function DomeinenTab() {
         </div>
       )}
 
+      {nieuwId && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius)', padding: 'var(--space-3) var(--space-4)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 'var(--text-sm)', color: '#166534' }}>✓ Domein aangemaakt. Voeg nu zaaksoorten en indicatoren toe.</span>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <button className="bp-btn-primary bp-btn-sm" onClick={() => navigate(`/inrichting/${nieuwId}`)}>Inrichten →</button>
+            <button className="bp-btn-ghost bp-btn-sm" onClick={() => setNieuwId(null)}>✕</button>
+          </div>
+        </div>
+      )}
+
       <table className="bp-table">
         <thead><tr><th>Naam</th><th>Basisperiode</th><th>Drempel</th><th></th></tr></thead>
         <tbody>
@@ -108,7 +119,12 @@ function DomeinenTab() {
               <td><strong>{d.naam}</strong><br /><span className="bp-muted">{d.omschrijving}</span></td>
               <td>{d.basisperiode}</td>
               <td>{Number(d.interventiedrempel)}</td>
-              <td><button className="bp-btn-ghost bp-btn-sm" onClick={() => openEdit(d)}>Bewerken</button></td>
+              <td>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="bp-btn-ghost bp-btn-sm" onClick={() => openEdit(d)}>Bewerken</button>
+                  <button className="bp-btn-ghost bp-btn-sm" onClick={() => navigate(`/inrichting/${d.id}`)}>Inrichten</button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

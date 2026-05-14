@@ -376,3 +376,29 @@
   text-transform: uppercase;
   margin: 0;
 }
+
+.sp-leeg-staat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-10);
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.sp-leeg-icoon { font-size: 48px; }
+
+.sp-leeg-staat h2 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.sp-leeg-staat p {
+  font-size: var(--text-sm);
+  max-width: 400px;
+  margin: 0;
+}

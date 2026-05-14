@@ -49,6 +49,26 @@ export function StrategiePage() {
   if (loading) return <div className="sp-loading">Laden…</div>;
   if (!strategie) return null;
 
+  if (strategie.zaaksoorten.length === 0) {
+    return (
+      <div className="sp-root">
+        <div className="sp-leeg-staat">
+          <div className="sp-leeg-icoon">📋</div>
+          <h2>Dit domein heeft nog geen zaaksoorten</h2>
+          <p>Voeg zaaksoorten, indicatoren en metingen toe via Inrichting om de strategiematrix te vullen.</p>
+          <a href={`/inrichting/${id}`} className="btn-primary" style={{ display: 'inline-block', marginTop: 'var(--space-4)', padding: '10px 24px', borderRadius: 'var(--radius-sm)', textDecoration: 'none', color: '#fff', background: 'var(--color-primary)', fontWeight: 600 }}>
+            Ga naar Inrichting →
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  const heeftMetingen = strategie.zaaksoorten.some(z => z.heeftMetingen);
+  if (!heeftMetingen) {
+    // Toon wel de zaaksoorten-strip maar geen matrix — geef uitleg
+  }
+
   const toggleSelectie = (zaaksoortId: number) => {
     setSelectedIds(prev => {
       if (prev.includes(zaaksoortId)) return prev.filter(id => id !== zaaksoortId);
