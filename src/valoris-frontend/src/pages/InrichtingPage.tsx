@@ -17,6 +17,8 @@ const NORM_RICHTING = [
   { value: 'lagerisbeter', label: 'Lager is beter (<)' },
 ];
 
+const BRONNEN = ['Handmatig', 'Systeem', 'Import', 'Berekend'];
+
 function stoplicht(waarde: number, norm: number, richting: string): 'groen' | 'oranje' | 'rood' {
   if (norm === 0) return 'groen';
   const ratio = richting === 'lagerisbeter' ? norm / waarde : waarde / norm;
@@ -55,7 +57,7 @@ export function InrichtingPage() {
   const [periodeType, setPeriodeType] = useState<PeriodeType>('kwartaal');
   const [periodeIdx, setPeriodeIdx] = useState(0);
 
-  const [metingInput, setMetingInput] = useState<{ doelId: number; waarde: string } | null>(null);
+  const [metingInput, setMetingInput] = useState<{ doelId: number; waarde: string; bron: string } | null>(null);
   const [nieuwDoelModal, setNieuwDoelModal] = useState<'prestatie' | 'inrichting' | null>(null);
   const [doelForm, setDoelForm] = useState<MetingsdoelCreate>({ domeinIndicatorId: 0, zaaksoortId: 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
   const [bewerkDoel, setBewerkDoel] = useState<Metingsdoel | null>(null);
@@ -136,18 +138,33 @@ export function InrichtingPage() {
   const slaMetingOp = async (doelId: number, waardeStr: string) => {
     const waarde = parseFloat(waardeStr);
     if (isNaN(waarde) || !huidigePeriode) { setMetingInput(null); return; }
+    const bron = metingInput?.bron ?? 'Handmatig';
     setSaving(true); setFout(null);
     try {
       const bestaand = metingVoorDoel(doelId);
       if (bestaand) {
-        await updateMeting(bestaand.id, { waarde, datum: bestaand.datum, bron: bestaand.bron, gevalideerd: bestaand.gevalideerd });
+        await updateMeting(bestaand.id, { waarde, datum: bestaand.datum, bron, gevalideerd: bestaand.gevalideerd });
       } else {
-        await createMeting({ metingsdoelId: doelId, periodeId: huidigePeriode.id, waarde, datum: new Date().toISOString(), bron: 'Handmatig' });
+        await createMeting({ metingsdoelId: doelId, periodeId: huidigePeriode.id, waarde, datum: new Date().toISOString(), bron });
       }
       setMetingInput(null);
       await laad();
     } catch {
       setFout('Meting opslaan mislukt. Controleer je verbinding en probeer opnieuw.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const valideerMeting = async (doelId: number) => {
+    const meting = metingVoorDoel(doelId);
+    if (!meting) return;
+    setSaving(true); setFout(null);
+    try {
+      await updateMeting(meting.id, { waarde: meting.waarde, datum: meting.datum, bron: meting.bron, gevalideerd: true });
+      await laad();
+    } catch {
+      setFout('Valideren mislukt. Probeer opnieuw.');
     } finally {
       setSaving(false);
     }
@@ -458,20 +475,34 @@ export function InrichtingPage() {
                             {delta < 0 ? '↓' : '↑'} {Math.abs(delta)} {ind.eenheid}
                           </span>
                         )}
-                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde) })}>bewerken</button>
+                        {meting.gevalideerd
+                          ? <span className="ip-gevalideerd-badge" title="Gevalideerd">✓ gevalideerd</span>
+                          : <button className="ip-valideer-btn" onClick={() => valideerMeting(md.id)} title="Meting valideren">✓</button>
+                        }
+                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde), bron: meting.bron })}>bewerken</button>
                       </div>
                     )}
                     {editingThis ? (
-                      <input
-                        className="ip-meting-input"
-                        autoFocus
-                        defaultValue={meting?.waarde ?? ''}
-                        placeholder={`waarde in ${ind.eenheid ?? ''}`}
-                        onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setMetingInput(null); }}
-                        onBlur={e => slaMetingOp(md.id, e.target.value)}
-                      />
+                      <div className="ip-meting-form">
+                        <input
+                          className="ip-meting-input"
+                          autoFocus
+                          defaultValue={meting?.waarde ?? ''}
+                          placeholder={`waarde in ${ind.eenheid ?? ''}`}
+                          onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setMetingInput(null); }}
+                          onBlur={e => slaMetingOp(md.id, e.target.value)}
+                        />
+                        <select
+                          className="ip-bron-select"
+                          value={metingInput?.bron ?? 'Handmatig'}
+                          onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
+                          onMouseDown={e => e.stopPropagation()}
+                        >
+                          {BRONNEN.map(b => <option key={b}>{b}</option>)}
+                        </select>
+                      </div>
                     ) : !meting ? (
-                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '' })}>+ meting toevoegen</button>
+                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting toevoegen</button>
                     ) : null}
                   </div>
                 );
@@ -547,20 +578,36 @@ export function InrichtingPage() {
                     {meting && !editingThis && (
                       <>
                         <div className={`ip-card-waarde ${sl ? `sl-waarde-${sl}` : ''}`}>{meting.waarde}{ind.eenheid}</div>
-                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde) })}>bewerken</button>
+                        <div className="ip-card-acties">
+                          {meting.gevalideerd
+                            ? <span className="ip-gevalideerd-badge" title="Gevalideerd">✓</span>
+                            : <button className="ip-valideer-btn" onClick={() => valideerMeting(md.id)} title="Meting valideren">✓</button>
+                          }
+                          <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde), bron: meting.bron })}>bewerken</button>
+                        </div>
                       </>
                     )}
                     {editingThis ? (
-                      <input
-                        className="ip-meting-input"
-                        autoFocus
-                        defaultValue={meting?.waarde ?? ''}
-                        placeholder={ind.eenheid ?? 'waarde'}
-                        onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setMetingInput(null); }}
-                        onBlur={e => slaMetingOp(md.id, e.target.value)}
-                      />
+                      <div className="ip-meting-form">
+                        <input
+                          className="ip-meting-input"
+                          autoFocus
+                          defaultValue={meting?.waarde ?? ''}
+                          placeholder={ind.eenheid ?? 'waarde'}
+                          onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setMetingInput(null); }}
+                          onBlur={e => slaMetingOp(md.id, e.target.value)}
+                        />
+                        <select
+                          className="ip-bron-select"
+                          value={metingInput?.bron ?? 'Handmatig'}
+                          onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
+                          onMouseDown={e => e.stopPropagation()}
+                        >
+                          {BRONNEN.map(b => <option key={b}>{b}</option>)}
+                        </select>
+                      </div>
                     ) : !meting ? (
-                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '' })}>+ meting</button>
+                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting</button>
                     ) : null}
                   </div>
                 );

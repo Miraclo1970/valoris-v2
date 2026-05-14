@@ -439,9 +439,15 @@
   padding: 0;
 }
 
-.ip-meting-input {
+.ip-meting-form {
   margin-top: var(--space-2);
-  width: 100%;
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.ip-meting-input {
+  flex: 1;
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
@@ -449,6 +455,48 @@
   outline: none;
   background: #fff;
   box-sizing: border-box;
+  min-width: 0;
+}
+
+.ip-bron-select {
+  padding: var(--space-1) var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ip-valideer-btn {
+  background: none;
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-success);
+  font-size: var(--text-xs);
+  padding: 1px 5px;
+  line-height: 1.4;
+  opacity: 0.7;
+  transition: opacity 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+
+.ip-valideer-btn:hover { opacity: 1; background: var(--color-success-light); }
+
+.ip-gevalideerd-badge {
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.ip-card-acties {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 2px;
 }
 
 /* Full-width add button */
