@@ -3,14 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
 using Valoris.Api.Data.Entities;
+using Valoris.Api.Helpers;
 using Valoris.Api.Models;
+using static Valoris.Api.Helpers.DomeinAutorisatie;
 
 namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api")]
 [Authorize]
-public class MetingsdoelenController : ControllerBase
+public class MetingsdoelenController : ValorisController
 {
     private readonly ValorisDbContext _db;
 
@@ -44,6 +46,14 @@ public class MetingsdoelenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> Create(MetingsdoelCreateDto dto)
     {
+        // Domein opzoeken via DomeinIndicator voor scope-check
+        var domeinId = await _db.DomeinIndicatoren
+            .Where(di => di.Id == dto.DomeinIndicatorId)
+            .Select(di => (int?)di.DomeinId)
+            .FirstOrDefaultAsync();
+        if (domeinId is null) return BadRequest("Onbekende DomeinIndicator.");
+        if (!await HeeftRolAsync(_db, GebruikerId, domeinId.Value, "beheerder")) return Forbid();
+
         if (!Enum.TryParse<NormRichting>(dto.NormRichting, ignoreCase: true, out var richting))
             return BadRequest("Onbekende NormRichting.");
 
@@ -64,8 +74,11 @@ public class MetingsdoelenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> Update(int id, MetingsdoelUpdateDto dto)
     {
-        var metingsdoel = await _db.Metingsdoelen.FindAsync(id);
+        var metingsdoel = await _db.Metingsdoelen
+            .Include(m => m.DomeinIndicator)
+            .FirstOrDefaultAsync(m => m.Id == id);
         if (metingsdoel is null) return NotFound();
+        if (!await HeeftRolAsync(_db, GebruikerId, metingsdoel.DomeinIndicator.DomeinId, "beheerder")) return Forbid();
 
         if (!Enum.TryParse<NormRichting>(dto.NormRichting, ignoreCase: true, out var richting))
             return BadRequest("Onbekende NormRichting.");

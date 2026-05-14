@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
 using Valoris.Api.Data.Entities;
 using Valoris.Api.Helpers;
+using static Valoris.Api.Helpers.DomeinAutorisatie;
 using Valoris.Api.Models;
 
 namespace Valoris.Api.Controllers;
@@ -11,7 +12,7 @@ namespace Valoris.Api.Controllers;
 [ApiController]
 [Route("api/domeinen")]
 [Authorize]
-public class DoméinenController : ControllerBase
+public class DoméinenController : ValorisController
 {
     private readonly ValorisDbContext _db;
 
@@ -54,6 +55,7 @@ public class DoméinenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> Update(int id, [FromBody] DomeinCreate body)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, id, "beheerder")) return Forbid();
         var domein = await _db.Domeinen.FindAsync(id);
         if (domein is null) return NotFound();
         if (!Enum.TryParse<PeriodeType>(body.Basisperiode, true, out var periodeType))
@@ -71,6 +73,7 @@ public class DoméinenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> CreateZaaksoort(int id, [FromBody] ZaaksoortCreate body)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, id, "beheerder")) return Forbid();
         if (!await _db.Domeinen.AnyAsync(d => d.Id == id)) return NotFound();
         var maxVolgorde = await _db.Zaaksoorten
             .Where(z => z.DomeinId == id)
@@ -95,6 +98,7 @@ public class DoméinenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> UpdateZaaksoort(int id, int zaaksoortId, [FromBody] ZaaksoortCreate body)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, id, "beheerder")) return Forbid();
         var z = await _db.Zaaksoorten.FirstOrDefaultAsync(z => z.Id == zaaksoortId && z.DomeinId == id);
         if (z is null) return NotFound();
         z.Naam = body.Naam;
@@ -124,6 +128,7 @@ public class DoméinenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> HerschikZaaksoorten(int id, [FromBody] int[] volgordeIds)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, id, "beheerder")) return Forbid();
         var zaaksoorten = await _db.Zaaksoorten
             .Where(z => z.DomeinId == id && z.Actief)
             .ToListAsync();
@@ -142,6 +147,7 @@ public class DoméinenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> VerplaatsZaaksoort(int id, int zaaksoortId, [FromBody] VerplaatsBody body)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, id, "beheerder")) return Forbid();
         var zaaksoorten = await _db.Zaaksoorten
             .Where(z => z.DomeinId == id && z.Actief)
             .OrderBy(z => z.Volgorde)
@@ -196,6 +202,7 @@ public class DoméinenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> KoppelIndicator(int id, [FromBody] DomeinIndicatorCreate body)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, id, "beheerder")) return Forbid();
         if (!await _db.Domeinen.AnyAsync(d => d.Id == id)) return NotFound();
         var bestaand = await _db.DomeinIndicatoren
             .FirstOrDefaultAsync(di => di.DomeinId == id && di.IndicatorId == body.IndicatorId);
@@ -215,6 +222,7 @@ public class DoméinenController : ControllerBase
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> OntkoppelIndicator(int id, int domeinIndicatorId)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, id, "beheerder")) return Forbid();
         var di = await _db.DomeinIndicatoren
             .FirstOrDefaultAsync(di => di.Id == domeinIndicatorId && di.DomeinId == id);
         if (di is null) return NotFound();

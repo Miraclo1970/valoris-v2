@@ -3,14 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
 using Valoris.Api.Data.Entities;
+using Valoris.Api.Helpers;
 using Valoris.Api.Models;
+using static Valoris.Api.Helpers.DomeinAutorisatie;
 
 namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api")]
 [Authorize]
-public class VeranderimpactController : ControllerBase
+public class VeranderimpactController : ValorisController
 {
     private readonly ValorisDbContext _db;
 
@@ -35,6 +37,13 @@ public class VeranderimpactController : ControllerBase
     [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Create(VeranderimpactCreateDto dto)
     {
+        var domeinId = await _db.Veranderingen
+            .Where(v => v.Id == dto.VeranderingId)
+            .Select(v => (int?)v.DomeinId)
+            .FirstOrDefaultAsync();
+        if (domeinId is null) return BadRequest("Onbekende VeranderingId.");
+        if (!await HeeftRolAsync(_db, GebruikerId, domeinId.Value, "redacteur")) return Forbid();
+
         if (!Enum.TryParse<ImpactType>(dto.Type, ignoreCase: true, out var type))
             return BadRequest("Onbekend Type.");
 
@@ -55,8 +64,11 @@ public class VeranderimpactController : ControllerBase
     [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Update(int id, VeranderimpactUpdateDto dto)
     {
-        var impact = await _db.Veranderimpacten.FindAsync(id);
+        var impact = await _db.Veranderimpacten
+            .Include(vi => vi.Verandering)
+            .FirstOrDefaultAsync(vi => vi.Id == id);
         if (impact is null) return NotFound();
+        if (!await HeeftRolAsync(_db, GebruikerId, impact.Verandering.DomeinId, "redacteur")) return Forbid();
 
         if (!Enum.TryParse<ImpactType>(dto.Type, ignoreCase: true, out var type))
             return BadRequest("Onbekend Type.");
@@ -71,8 +83,11 @@ public class VeranderimpactController : ControllerBase
     [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Delete(int id)
     {
-        var impact = await _db.Veranderimpacten.FindAsync(id);
+        var impact = await _db.Veranderimpacten
+            .Include(vi => vi.Verandering)
+            .FirstOrDefaultAsync(vi => vi.Id == id);
         if (impact is null) return NotFound();
+        if (!await HeeftRolAsync(_db, GebruikerId, impact.Verandering.DomeinId, "redacteur")) return Forbid();
 
         _db.Veranderimpacten.Remove(impact);
         await _db.SaveChangesAsync();

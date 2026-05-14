@@ -3,14 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Valoris.Api.Data;
 using Valoris.Api.Data.Entities;
+using Valoris.Api.Helpers;
 using Valoris.Api.Models;
+using static Valoris.Api.Helpers.DomeinAutorisatie;
 
 namespace Valoris.Api.Controllers;
 
 [ApiController]
 [Route("api")]
 [Authorize]
-public class VeranderingenController : ControllerBase
+public class VeranderingenController : ValorisController
 {
     private readonly ValorisDbContext _db;
 
@@ -38,6 +40,7 @@ public class VeranderingenController : ControllerBase
     [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> Create(VeranderingCreateDto dto)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, dto.DomeinId, "redacteur")) return Forbid();
         if (!Enum.TryParse<VeranderingType>(dto.Type, ignoreCase: true, out var type))
             return BadRequest("Onbekend Type.");
         if (!Enum.TryParse<VeranderingStatus>(dto.Status, ignoreCase: true, out var status))
@@ -66,6 +69,7 @@ public class VeranderingenController : ControllerBase
     {
         var verandering = await _db.Veranderingen.FindAsync(id);
         if (verandering is null) return NotFound();
+        if (!await HeeftRolAsync(_db, GebruikerId, verandering.DomeinId, "redacteur")) return Forbid();
 
         if (!Enum.TryParse<VeranderingType>(dto.Type, ignoreCase: true, out var type))
             return BadRequest("Onbekend Type.");
@@ -89,6 +93,7 @@ public class VeranderingenController : ControllerBase
     [Authorize(Roles = "beheerder,redacteur")]
     public async Task<IActionResult> ImportCsv(IFormFile file, [FromQuery] int domeinId)
     {
+        if (!await HeeftRolAsync(_db, GebruikerId, domeinId, "redacteur")) return Forbid();
         if (!await _db.Domeinen.AnyAsync(d => d.Id == domeinId))
             return NotFound("Domein niet gevonden.");
 
