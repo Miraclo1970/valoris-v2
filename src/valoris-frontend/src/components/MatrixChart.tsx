@@ -32,7 +32,7 @@ export function MatrixChart({ zaaksoorten, selectedIds, interventiedrempel = 60 
     if (!wrapRef.current) return;
     const ro = new ResizeObserver(entries => {
       const w = entries[0].contentRect.width;
-      if (w > 0) setSize({ width: w, height: Math.round(w * 0.72) });
+      if (w > 0) setSize({ width: w, height: Math.min(Math.round(w * 0.72), 560) });
     });
     ro.observe(wrapRef.current);
     return () => ro.disconnect();
