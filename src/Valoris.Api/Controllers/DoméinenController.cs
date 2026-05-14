@@ -133,12 +133,22 @@ public class DoméinenController : ValorisController
             .Where(z => z.DomeinId == id && z.Actief)
             .ToListAsync();
 
+        // Stap 1: tijdelijke hoge waarden om unieke-index conflict te vermijden.
+        // SQL Server valideert per statement, dus directe herindeling crasht op duplicaten.
+        var offset = zaaksoorten.Count + 100;
+        for (var i = 0; i < volgordeIds.Length; i++)
+        {
+            var z = zaaksoorten.FirstOrDefault(x => x.Id == volgordeIds[i]);
+            if (z is not null) z.Volgorde = offset + i;
+        }
+        await _db.SaveChangesAsync();
+
+        // Stap 2: definitieve volgorde (nu geen conflicten meer)
         for (var i = 0; i < volgordeIds.Length; i++)
         {
             var z = zaaksoorten.FirstOrDefault(x => x.Id == volgordeIds[i]);
             if (z is not null) z.Volgorde = i + 1;
         }
-
         await _db.SaveChangesAsync();
         return NoContent();
     }
@@ -159,9 +169,18 @@ public class DoméinenController : ValorisController
         var swapIdx = body.Richting == "omhoog" ? idx - 1 : idx + 1;
         if (swapIdx < 0 || swapIdx >= zaaksoorten.Count) return BadRequest("Kan niet verder verschuiven");
 
-        (zaaksoorten[idx].Volgorde, zaaksoorten[swapIdx].Volgorde) =
-            (zaaksoorten[swapIdx].Volgorde, zaaksoorten[idx].Volgorde);
+        var volgordeA = zaaksoorten[idx].Volgorde;
+        var volgordeB = zaaksoorten[swapIdx].Volgorde;
+        var temp = zaaksoorten.Max(z => z.Volgorde) + 100;
 
+        // Stap 1: idx tijdelijk uit de weg
+        zaaksoorten[idx].Volgorde = temp;
+        zaaksoorten[swapIdx].Volgorde = temp + 1;
+        await _db.SaveChangesAsync();
+
+        // Stap 2: definitieve waarden (geen conflicts meer)
+        zaaksoorten[idx].Volgorde = volgordeB;
+        zaaksoorten[swapIdx].Volgorde = volgordeA;
         await _db.SaveChangesAsync();
         return NoContent();
     }
