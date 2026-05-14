@@ -21,16 +21,9 @@ export function Layout() {
         <div className="sidebar-logo">Valoris</div>
         <nav className="sidebar-nav">
           {domeinen.map(d => (
-            <div key={d.id} className="sidebar-domein">
-              <span className="sidebar-domein-naam">{d.naam}</span>
-              <NavLink to={`/strategie/${d.id}`} className={({ isActive }) => isActive ? 'active' : ''}>Strategie</NavLink>
-              {hasRole('redacteur', d.id) && (
-                <NavLink to={`/veranderingen/${d.id}`} className={({ isActive }) => isActive ? 'active' : ''}>Veranderingen</NavLink>
-              )}
-              {hasRole('beheerder', d.id) && (
-                <NavLink to={`/inrichting/${d.id}`} className={({ isActive }) => isActive ? 'active' : ''}>Inrichting</NavLink>
-              )}
-            </div>
+            <NavLink key={d.id} to={`/strategie/${d.id}`} className={({ isActive }) => `sidebar-domein-link${isActive ? ' active' : ''}`}>
+              {d.naam}
+            </NavLink>
           ))}
         </nav>
         {hasRole('beheerder') && (

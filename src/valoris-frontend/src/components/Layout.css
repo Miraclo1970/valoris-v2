@@ -32,16 +32,18 @@
   gap: var(--space-5);
 }
 
-.sidebar-domein { display: flex; flex-direction: column; gap: var(--space-1); }
-
-.sidebar-domein-naam {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-muted);
-  font-weight: 600;
-  padding: var(--space-1) var(--space-2);
+.sidebar-domein-link {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
 }
+
+.sidebar-domein-link:hover { background: var(--color-bg); }
+.sidebar-domein-link.active { background: var(--color-primary-light); color: var(--color-primary); font-weight: 600; }
 
 .sidebar-nav a {
   display: block;
