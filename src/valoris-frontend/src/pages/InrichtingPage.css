@@ -39,6 +39,12 @@
   gap: var(--space-3);
 }
 
+.ip-klantreis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .ip-klantreis-strip {
   display: flex;
   align-items: center;
@@ -77,6 +83,44 @@
   border-color: var(--color-primary);
   color: #fff;
 }
+
+.ip-zaak-chip.dragging {
+  opacity: 0.4;
+}
+
+.ip-zaak-chip.drag-over {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.ip-zaak-drag-handle {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  opacity: 0.4;
+  cursor: grab;
+  line-height: 1;
+  margin-right: 2px;
+}
+
+.ip-zaak-chip:hover .ip-zaak-drag-handle { opacity: 0.8; }
+
+.ip-zaak-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  opacity: 0;
+  padding: 0 0 0 4px;
+  line-height: 1;
+  transition: opacity 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+
+.ip-zaak-chip:hover .ip-zaak-edit-btn { opacity: 1; }
+.ip-zaak-chip.selected .ip-zaak-edit-btn { color: rgba(255,255,255,0.7); opacity: 0.7; }
+.ip-zaak-chip.selected:hover .ip-zaak-edit-btn { opacity: 1; color: #fff; }
 
 .ip-zaak-icoon {
   font-size: 20px;

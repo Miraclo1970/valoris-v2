@@ -32,6 +32,7 @@ export const getZaaksoorten = (domeinId: number) => request<Zaaksoort[]>(`/domei
 export const createZaaksoort = (domeinId: number, body: ZaaksoortCreate) => request<number>(`/domeinen/${domeinId}/zaaksoorten`, { method: 'POST', body: JSON.stringify(body) });
 export const updateZaaksoort = (domeinId: number, id: number, body: ZaaksoortCreate) => request<void>(`/domeinen/${domeinId}/zaaksoorten/${id}`, { method: 'PUT', body: JSON.stringify(body) });
 export const verplaatsZaaksoort = (domeinId: number, id: number, richting: 'omhoog' | 'omlaag') => request<void>(`/domeinen/${domeinId}/zaaksoorten/${id}/verplaats`, { method: 'PUT', body: JSON.stringify({ richting }) });
+export const herordZaaksoorten = (domeinId: number, volgordeIds: number[]) => request<void>(`/domeinen/${domeinId}/zaaksoorten/herschikken`, { method: 'PUT', body: JSON.stringify(volgordeIds) });
 export const getIndicatoren = (domeinId: number) => request<DomeinIndicator[]>(`/domeinen/${domeinId}/indicatoren`);
 export const koppelIndicator = (domeinId: number, indicatorId: number) => request<number>(`/domeinen/${domeinId}/indicatoren`, { method: 'POST', body: JSON.stringify({ indicatorId }) });
 export const ontkoppelIndicator = (domeinId: number, domeinIndicatorId: number) => request<void>(`/domeinen/${domeinId}/indicatoren/${domeinIndicatorId}`, { method: 'DELETE' });

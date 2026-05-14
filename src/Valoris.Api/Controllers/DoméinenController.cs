@@ -120,6 +120,24 @@ public class DoméinenController : ControllerBase
         return Ok(zaaksoorten);
     }
 
+    [HttpPut("{id}/zaaksoorten/herschikken")]
+    [Authorize(Roles = "beheerder")]
+    public async Task<IActionResult> HerschikZaaksoorten(int id, [FromBody] int[] volgordeIds)
+    {
+        var zaaksoorten = await _db.Zaaksoorten
+            .Where(z => z.DomeinId == id && z.Actief)
+            .ToListAsync();
+
+        for (var i = 0; i < volgordeIds.Length; i++)
+        {
+            var z = zaaksoorten.FirstOrDefault(x => x.Id == volgordeIds[i]);
+            if (z is not null) z.Volgorde = i + 1;
+        }
+
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpPut("{id}/zaaksoorten/{zaaksoortId}/verplaats")]
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> VerplaatsZaaksoort(int id, int zaaksoortId, [FromBody] VerplaatsBody body)

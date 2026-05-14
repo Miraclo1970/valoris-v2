@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   getZaaksoorten, getIndicatoren, getAlleIndicatoren, koppelIndicator,
   getMetingsdoelen, getMetingen,
   createMetingsdoel, updateMetingsdoel, createMeting, updateMeting,
   getPeriodes, getDomeinen,
+  createZaaksoort, updateZaaksoort, herordZaaksoorten,
   type Zaaksoort, type DomeinIndicator, type Indicator, type Metingsdoel, type Meting,
-  type HuidigePeriode, type MetingsdoelCreate, type MetingsdoelUpdate,
+  type HuidigePeriode, type MetingsdoelCreate, type MetingsdoelUpdate, type ZaaksoortCreate,
 } from '../api/client';
 import { Modal } from '../components/Modal';
 import './InrichtingPage.css';
@@ -59,6 +60,17 @@ export function InrichtingPage() {
   const [doelForm, setDoelForm] = useState<MetingsdoelCreate>({ domeinIndicatorId: 0, zaaksoortId: 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
   const [bewerkDoel, setBewerkDoel] = useState<Metingsdoel | null>(null);
   const [bewerkForm, setBewerkForm] = useState<MetingsdoelUpdate>({ normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1, actief: true });
+
+  // Zaaksoort beheer
+  const leegZaaksoortForm: ZaaksoortCreate = { naam: '', omschrijving: '', icoon: '', behandeling: '' };
+  const [zaaksoortModal, setZaaksoortModal] = useState<'nieuw' | Zaaksoort | null>(null);
+  const [zaaksoortForm, setZaaksoortForm] = useState<ZaaksoortCreate>(leegZaaksoortForm);
+
+  // Drag-and-drop volgorde
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const dragNode = useRef<HTMLDivElement | null>(null);
+
   const [fout, setFout] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -216,6 +228,70 @@ export function InrichtingPage() {
     setNieuwDoelModal(type);
   };
 
+  const openNieuwZaaksoort = () => {
+    setZaaksoortForm(leegZaaksoortForm);
+    setZaaksoortModal('nieuw');
+  };
+
+  const openBewerkZaaksoort = (z: Zaaksoort, e: React.MouseEvent) => {
+    e.stopPropagation(); // voorkom chip-selectie
+    setZaaksoortForm({ naam: z.naam, omschrijving: z.omschrijving, icoon: z.icoon ?? '', behandeling: z.behandeling ?? '' });
+    setZaaksoortModal(z);
+  };
+
+  const slaZaaksoortOp = async () => {
+    setSaving(true); setFout(null);
+    try {
+      if (zaaksoortModal === 'nieuw') {
+        const nieuweId = await createZaaksoort(id, zaaksoortForm);
+        setZaaksoortModal(null);
+        await laad();
+        setSelectedZaaksoortId(nieuweId);
+      } else if (zaaksoortModal) {
+        await updateZaaksoort(id, zaaksoortModal.id, zaaksoortForm);
+        setZaaksoortModal(null);
+        await laad();
+      }
+    } catch {
+      setFout('Zaaksoort opslaan mislukt. Probeer opnieuw.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Drag-and-drop handlers
+  const handleDragStart = (e: React.DragEvent, zaaksoortId: number) => {
+    setDragId(zaaksoortId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, zaaksoortId: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (zaaksoortId !== dragId) setDragOverId(zaaksoortId);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return; }
+    const herordend = [...zaaksoorten];
+    const fromIdx = herordend.findIndex(z => z.id === dragId);
+    const toIdx = herordend.findIndex(z => z.id === targetId);
+    const [moved] = herordend.splice(fromIdx, 1);
+    herordend.splice(toIdx, 0, moved);
+    setZaaksoorten(herordend); // optimistisch bijwerken
+    setDragId(null);
+    setDragOverId(null);
+    try {
+      await herordZaaksoorten(id, herordend.map(z => z.id));
+    } catch {
+      setFout('Volgorde aanpassen mislukt.');
+      await laad(); // terugdraaien bij fout
+    }
+  };
+
+  const handleDragEnd = () => { setDragId(null); setDragOverId(null); };
+
   return (
     <div className="ip-root">
       {fout && (
@@ -226,17 +302,40 @@ export function InrichtingPage() {
       )}
       {/* Klantreis strip */}
       <div className="ip-klantreis-wrap">
-        <span className="ip-section-label">KLANTREIS (ZAAKSOORTEN)</span>
+        <div className="ip-klantreis-header">
+          <span className="ip-section-label">KLANTREIS (ZAAKSOORTEN)</span>
+          <button className="ip-add-sm-btn" onClick={openNieuwZaaksoort} title="Nieuwe zaaksoort">+ Zaaksoort</button>
+        </div>
         <div className="ip-klantreis-strip">
           {zaaksoorten.map((z, i) => (
-            <div key={z.id} className="ip-zaak-wrap">
+            <div
+              key={z.id}
+              className="ip-zaak-wrap"
+              draggable
+              ref={dragId === z.id ? dragNode : null}
+              onDragStart={e => handleDragStart(e, z.id)}
+              onDragOver={e => handleDragOver(e, z.id)}
+              onDrop={e => handleDrop(e, z.id)}
+              onDragEnd={handleDragEnd}
+            >
               <div
-                className={`ip-zaak-chip ${selectedZaaksoortId === z.id ? 'selected' : ''}`}
+                className={[
+                  'ip-zaak-chip',
+                  selectedZaaksoortId === z.id ? 'selected' : '',
+                  dragId === z.id ? 'dragging' : '',
+                  dragOverId === z.id ? 'drag-over' : '',
+                ].filter(Boolean).join(' ')}
                 onClick={() => setSelectedZaaksoortId(z.id)}
               >
+                <span className="ip-zaak-drag-handle" title="Slepen om te herordenen">⠿</span>
                 {z.icoon && <span className="ip-zaak-icoon">{z.icoon}</span>}
                 <span className="ip-zaak-naam">{z.naam}</span>
                 {z.behandeling && <span className="ip-zaak-behandeling">{z.behandeling}</span>}
+                <button
+                  className="ip-zaak-edit-btn"
+                  onClick={e => openBewerkZaaksoort(z, e)}
+                  title="Zaaksoort bewerken"
+                >✎</button>
               </div>
               {i < zaaksoorten.length - 1 && <span className="ip-zaak-arrow">›</span>}
             </div>
@@ -475,6 +574,45 @@ export function InrichtingPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal: zaaksoort aanmaken / bewerken */}
+      {zaaksoortModal && (
+        <Modal
+          title={zaaksoortModal === 'nieuw' ? 'Nieuwe zaaksoort' : `Bewerken — ${(zaaksoortModal as Zaaksoort).naam}`}
+          onClose={() => setZaaksoortModal(null)}
+          footer={
+            <>
+              <button className="btn-secondary" onClick={() => setZaaksoortModal(null)} disabled={saving}>Annuleren</button>
+              <button className="btn-primary" onClick={slaZaaksoortOp} disabled={saving || !zaaksoortForm.naam}>{saving ? 'Bezig…' : 'Opslaan'}</button>
+            </>
+          }
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+            <div className="form-row" style={{ gridColumn: '1 / -1' }}>
+              <label>Naam</label>
+              <input autoFocus value={zaaksoortForm.naam} onChange={e => setZaaksoortForm(f => ({ ...f, naam: e.target.value }))} placeholder="bv. Aanvraag vergunning" />
+            </div>
+            <div className="form-row" style={{ gridColumn: '1 / -1' }}>
+              <label>Omschrijving</label>
+              <input value={zaaksoortForm.omschrijving} onChange={e => setZaaksoortForm(f => ({ ...f, omschrijving: e.target.value }))} placeholder="Korte beschrijving" />
+            </div>
+            <div className="form-row">
+              <label>Icoon (emoji)</label>
+              <input value={zaaksoortForm.icoon ?? ''} onChange={e => setZaaksoortForm(f => ({ ...f, icoon: e.target.value }))} placeholder="bv. 🪪" />
+            </div>
+            <div className="form-row">
+              <label>Behandeling</label>
+              <select value={zaaksoortForm.behandeling ?? ''} onChange={e => setZaaksoortForm(f => ({ ...f, behandeling: e.target.value }))}>
+                <option value="">—</option>
+                <option value="Balie">Balie</option>
+                <option value="Online">Online</option>
+                <option value="Post">Post</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Modal: norm/gewicht bewerken */}
