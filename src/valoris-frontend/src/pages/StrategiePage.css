@@ -235,15 +235,22 @@
 
 .sp-ges-naam {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-1);
   font-size: var(--text-sm);
   margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.sp-ges-naam strong {
+  word-break: break-word;
+  min-width: 0;
 }
 
 .sp-ges-scores {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+  word-break: break-word;
 }
 
 .sp-gap {
@@ -258,7 +265,8 @@
   background: var(--color-primary-light);
   border-radius: 4px;
   padding: 1px 5px;
-  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .sp-ges-verandering {
