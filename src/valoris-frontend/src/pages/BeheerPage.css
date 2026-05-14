@@ -252,16 +252,16 @@
 }
 
 .bp-koppel-rij {
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
   align-items: center;
-  gap: var(--space-2);
+  column-gap: var(--space-2);
   font-size: var(--text-sm);
   color: var(--color-text);
   cursor: pointer;
   padding: 4px 0;
-  width: 100%;
 }
 
-.bp-koppel-rij input { accent-color: var(--color-primary); flex-shrink: 0; }
-.bp-koppel-naam { flex: 1; min-width: 0; }
-.bp-koppel-eenheid { margin-left: auto; flex-shrink: 0; white-space: nowrap; }
+.bp-koppel-rij input { accent-color: var(--color-primary); }
+.bp-koppel-naam { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bp-koppel-eenheid { white-space: nowrap; text-align: right; }
