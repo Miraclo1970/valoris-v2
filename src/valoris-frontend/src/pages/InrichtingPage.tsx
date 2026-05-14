@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  getZaaksoorten, getIndicatoren, getMetingsdoelen, getMetingen,
+  getZaaksoorten, getIndicatoren, getAlleIndicatoren, koppelIndicator,
+  getMetingsdoelen, getMetingen,
   createMetingsdoel, updateMetingsdoel, createMeting, updateMeting,
   getPeriodes, getDomeinen,
-  type Zaaksoort, type DomeinIndicator, type Metingsdoel, type Meting,
+  type Zaaksoort, type DomeinIndicator, type Indicator, type Metingsdoel, type Meting,
   type HuidigePeriode, type MetingsdoelCreate,
 } from '../api/client';
 import { Modal } from '../components/Modal';
@@ -36,6 +37,7 @@ export function InrichtingPage() {
 
   const [zaaksoorten, setZaaksoorten] = useState<Zaaksoort[]>([]);
   const [indicatoren, setIndicatoren] = useState<DomeinIndicator[]>([]);
+  const [bibliotheek, setBibliotheek] = useState<Indicator[]>([]);
   const [metingsdoelen, setMetingsdoelen] = useState<Metingsdoel[]>([]);
   const [metingen, setMetingen] = useState<Meting[]>([]);
   const [allePeriodes, setAllePeriodes] = useState<HuidigePeriode[]>([]);
@@ -49,10 +51,11 @@ export function InrichtingPage() {
   const [doelForm, setDoelForm] = useState<MetingsdoelCreate>({ domeinIndicatorId: 0, zaaksoortId: 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
 
   const laad = async () => {
-    const [domeinen, z, i, m, mt, p] = await Promise.all([
+    const [domeinen, z, i, bib, m, mt, p] = await Promise.all([
       getDomeinen(),
       getZaaksoorten(id),
       getIndicatoren(id),
+      getAlleIndicatoren(),
       getMetingsdoelen(id),
       getMetingen(id),
       getPeriodes(id),
@@ -60,6 +63,7 @@ export function InrichtingPage() {
     const d = domeinen.find(x => x.id === id) ?? null;
     setZaaksoorten(z);
     setIndicatoren(i);
+    setBibliotheek(bib);
     setMetingsdoelen(m);
     setMetingen(mt);
     setAllePeriodes(p);
@@ -113,7 +117,13 @@ export function InrichtingPage() {
 
   const slaDoelOp = async () => {
     if (!selectedZaaksoortId) return;
-    await createMetingsdoel({ ...doelForm, zaaksoortId: selectedZaaksoortId });
+    let domeinIndicatorId = doelForm.domeinIndicatorId;
+    // Negatieve ID = bibliotheek-indicator die nog niet gekoppeld is → auto-koppelen
+    if (domeinIndicatorId < 0) {
+      const bibliotheekId = -domeinIndicatorId;
+      domeinIndicatorId = await koppelIndicator(id, bibliotheekId);
+    }
+    await createMetingsdoel({ ...doelForm, domeinIndicatorId, zaaksoortId: selectedZaaksoortId });
     await laad();
     setNieuwDoelModal(null);
   };
@@ -123,8 +133,20 @@ export function InrichtingPage() {
     await laad();
   };
 
-  const beschikbareIndicatoren = (type: 'prestatie' | 'inrichting') =>
-    indicatoren.filter(i => i.type === type && !doelen.some(d => d.domeinIndicatorId === i.id));
+  // Geeft DomeinIndicatoren terug voor dit domein, aangevuld vanuit de bibliotheek als er nog geen gekoppeld zijn
+  const beschikbareIndicatoren = (type: 'prestatie' | 'inrichting') => {
+    const gekoppeld = indicatoren.filter(i => i.type === type && !doelen.some(d => d.domeinIndicatorId === i.id));
+    if (gekoppeld.length > 0) return gekoppeld;
+    // Bibliotheek-indicatoren die nog niet aan dit domein gekoppeld zijn
+    return bibliotheek
+      .filter(b => b.type === type)
+      .filter(b => !indicatoren.some(i => i.indicatorId === b.id))
+      .map(b => ({
+        id: -b.id, // negatief = nog niet gekoppeld, wordt auto-gekoppeld bij opslaan
+        domeinId: id, indicatorId: b.id, indicatorNaam: b.naam,
+        type: b.type, eenheid: b.eenheid, aggregatiewijze: b.aggregatiewijze, actief: true,
+      } as DomeinIndicator));
+  };
 
   const openNieuwDoel = (type: 'prestatie' | 'inrichting') => {
     setDoelForm({ domeinIndicatorId: beschikbareIndicatoren(type)[0]?.id ?? 0, zaaksoortId: selectedZaaksoortId ?? 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
