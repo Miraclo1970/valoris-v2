@@ -49,6 +49,8 @@ export function InrichtingPage() {
   const [metingInput, setMetingInput] = useState<{ doelId: number; waarde: string } | null>(null);
   const [nieuwDoelModal, setNieuwDoelModal] = useState<'prestatie' | 'inrichting' | null>(null);
   const [doelForm, setDoelForm] = useState<MetingsdoelCreate>({ domeinIndicatorId: 0, zaaksoortId: 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
+  const [fout, setFout] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const laad = async () => {
     const [domeinen, z, i, bib, m, mt, p] = await Promise.all([
@@ -105,32 +107,53 @@ export function InrichtingPage() {
   const slaMetingOp = async (doelId: number, waardeStr: string) => {
     const waarde = parseFloat(waardeStr);
     if (isNaN(waarde) || !huidigePeriode) { setMetingInput(null); return; }
-    const bestaand = metingVoorDoel(doelId);
-    if (bestaand) {
-      await updateMeting(bestaand.id, { waarde, datum: bestaand.datum, bron: bestaand.bron, gevalideerd: bestaand.gevalideerd });
-    } else {
-      await createMeting({ metingsdoelId: doelId, periodeId: huidigePeriode.id, waarde, datum: new Date().toISOString(), bron: 'Handmatig' });
+    setSaving(true); setFout(null);
+    try {
+      const bestaand = metingVoorDoel(doelId);
+      if (bestaand) {
+        await updateMeting(bestaand.id, { waarde, datum: bestaand.datum, bron: bestaand.bron, gevalideerd: bestaand.gevalideerd });
+      } else {
+        await createMeting({ metingsdoelId: doelId, periodeId: huidigePeriode.id, waarde, datum: new Date().toISOString(), bron: 'Handmatig' });
+      }
+      setMetingInput(null);
+      await laad();
+    } catch {
+      setFout('Meting opslaan mislukt. Controleer je verbinding en probeer opnieuw.');
+    } finally {
+      setSaving(false);
     }
-    setMetingInput(null);
-    await laad();
   };
 
   const slaDoelOp = async () => {
     if (!selectedZaaksoortId) return;
-    let domeinIndicatorId = doelForm.domeinIndicatorId;
-    // Negatieve ID = bibliotheek-indicator die nog niet gekoppeld is → auto-koppelen
-    if (domeinIndicatorId < 0) {
-      const bibliotheekId = -domeinIndicatorId;
-      domeinIndicatorId = await koppelIndicator(id, bibliotheekId);
+    setSaving(true); setFout(null);
+    try {
+      let domeinIndicatorId = doelForm.domeinIndicatorId;
+      // Negatieve ID = bibliotheek-indicator die nog niet gekoppeld is → auto-koppelen
+      if (domeinIndicatorId < 0) {
+        const bibliotheekId = -domeinIndicatorId;
+        domeinIndicatorId = await koppelIndicator(id, bibliotheekId);
+      }
+      await createMetingsdoel({ ...doelForm, domeinIndicatorId, zaaksoortId: selectedZaaksoortId });
+      await laad();
+      setNieuwDoelModal(null);
+    } catch {
+      setFout('Indicator toevoegen mislukt. Controleer je verbinding en probeer opnieuw.');
+    } finally {
+      setSaving(false);
     }
-    await createMetingsdoel({ ...doelForm, domeinIndicatorId, zaaksoortId: selectedZaaksoortId });
-    await laad();
-    setNieuwDoelModal(null);
   };
 
   const deactiveerDoel = async (md: Metingsdoel) => {
-    await updateMetingsdoel(md.id, { normWaarde: md.normWaarde, normRichting: md.normRichting, gewicht: md.gewicht, actief: false });
-    await laad();
+    setSaving(true); setFout(null);
+    try {
+      await updateMetingsdoel(md.id, { normWaarde: md.normWaarde, normRichting: md.normRichting, gewicht: md.gewicht, actief: false });
+      await laad();
+    } catch {
+      setFout('Deactiveren mislukt. Probeer opnieuw.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Altijd alle bibliotheek-indicatoren van dit type aanbieden die nog niet als metingsdoel voor deze zaaksoort bestaan.
@@ -158,6 +181,12 @@ export function InrichtingPage() {
 
   return (
     <div className="ip-root">
+      {fout && (
+        <div className="ip-fout-banner">
+          <span>{fout}</span>
+          <button className="ip-fout-sluiten" onClick={() => setFout(null)}>✕</button>
+        </div>
+      )}
       {/* Klantreis strip */}
       <div className="ip-klantreis-wrap">
         <span className="ip-section-label">KLANTREIS (ZAAKSOORTEN)</span>
@@ -337,7 +366,7 @@ export function InrichtingPage() {
         <Modal
           title={`Indicator toevoegen (${nieuwDoelModal})`}
           onClose={() => setNieuwDoelModal(null)}
-          footer={<><button className="btn-secondary" onClick={() => setNieuwDoelModal(null)}>Annuleren</button><button className="btn-primary" onClick={slaDoelOp}>Toevoegen</button></>}
+          footer={<><button className="btn-secondary" onClick={() => setNieuwDoelModal(null)} disabled={saving}>Annuleren</button><button className="btn-primary" onClick={slaDoelOp} disabled={saving || doelForm.domeinIndicatorId === 0}>{saving ? 'Bezig…' : 'Toevoegen'}</button></>}
         >
           <div className="form-row">
             <label>Indicator</label>

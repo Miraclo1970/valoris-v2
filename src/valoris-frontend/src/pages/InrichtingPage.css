@@ -7,6 +7,31 @@
   box-sizing: border-box;
 }
 
+/* ── Foutbanner ── */
+.ip-fout-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.ip-fout-sluiten {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-danger);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
 /* ── Klantreis strip ── */
 .ip-klantreis-wrap {
   display: flex;
