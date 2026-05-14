@@ -259,7 +259,9 @@
   color: var(--color-text);
   cursor: pointer;
   padding: 4px 0;
+  width: 100%;
 }
 
-.bp-koppel-rij input { accent-color: var(--color-primary); }
-.bp-koppel-eenheid { margin-left: auto; }
+.bp-koppel-rij input { accent-color: var(--color-primary); flex-shrink: 0; }
+.bp-koppel-naam { flex: 1; min-width: 0; }
+.bp-koppel-eenheid { margin-left: auto; flex-shrink: 0; white-space: nowrap; }

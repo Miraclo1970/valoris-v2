@@ -358,7 +358,7 @@ function KoppelenTab() {
                   disabled={saving}
                   onChange={() => toggle(i.id)}
                 />
-                <span>{i.naam}</span>
+                <span className="bp-koppel-naam">{i.naam}</span>
                 <span className="bp-muted bp-koppel-eenheid">{i.eenheid}</span>
               </label>
             ))}
