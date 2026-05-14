@@ -16,6 +16,14 @@ const NORM_RICHTING = [
   { value: 'lagerisbeter', label: 'Lager is beter (<)' },
 ];
 
+function stoplicht(waarde: number, norm: number, richting: string): 'groen' | 'oranje' | 'rood' {
+  if (norm === 0) return 'groen';
+  const ratio = richting === 'lagerisbeter' ? norm / waarde : waarde / norm;
+  if (ratio >= 1) return 'groen';
+  if (ratio >= 0.8) return 'oranje';
+  return 'rood';
+}
+
 function normLabel(md: Metingsdoel): string {
   const sym = md.normRichting === 'lagerisbeter' ? '<' : '>';
   return `${sym} ${md.normWaarde}`;
@@ -81,14 +89,6 @@ export function InrichtingPage() {
 
   const selectedZaaksoort = zaaksoorten.find(z => z.id === selectedZaaksoortId);
   const doelen = metingsdoelen.filter(m => m.zaaksoortId === selectedZaaksoortId);
-  const prestatieDoelen = doelen.filter(m => {
-    const ind = indicatoren.find(i => i.id === m.domeinIndicatorId);
-    return ind?.type === 'prestatie';
-  });
-  const inrichtingDoelen = doelen.filter(m => {
-    const ind = indicatoren.find(i => i.id === m.domeinIndicatorId);
-    return ind?.type === 'inrichting';
-  });
 
   const metingVoorDoel = (doelId: number, periodeId?: number): Meting | undefined =>
     metingen.find(m => m.metingsdoelId === doelId && m.periodeId === (periodeId ?? huidigePeriode?.id));
@@ -100,9 +100,18 @@ export function InrichtingPage() {
     return Math.round((huidig.waarde - vorig.waarde) * 1000) / 1000;
   };
 
-  const aantalActief = (type: 'prestatie' | 'inrichting') =>
-    (type === 'prestatie' ? prestatieDoelen : inrichtingDoelen)
-      .filter(m => metingVoorDoel(m.id)).length;
+  const aantalGemeten = (type: 'prestatie' | 'inrichting') =>
+    doelen
+      .filter(m => {
+        const ind = indicatoren.find(i => i.id === m.domeinIndicatorId);
+        return ind?.type === type && !!metingVoorDoel(m.id);
+      }).length;
+
+  const aantalRelevant = (type: 'prestatie' | 'inrichting') =>
+    doelen.filter(m => {
+      const ind = indicatoren.find(i => i.id === m.domeinIndicatorId);
+      return ind?.type === type;
+    }).length;
 
   const slaMetingOp = async (doelId: number, waardeStr: string) => {
     const waarde = parseFloat(waardeStr);
@@ -174,8 +183,9 @@ export function InrichtingPage() {
         } as DomeinIndicator;
       });
 
-  const openNieuwDoel = (type: 'prestatie' | 'inrichting') => {
-    setDoelForm({ domeinIndicatorId: beschikbareIndicatoren(type)[0]?.id ?? 0, zaaksoortId: selectedZaaksoortId ?? 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
+  const openNieuwDoel = (type: 'prestatie' | 'inrichting', preSelectId?: number) => {
+    const defaultId = preSelectId ?? beschikbareIndicatoren(type)[0]?.id ?? 0;
+    setDoelForm({ domeinIndicatorId: defaultId, zaaksoortId: selectedZaaksoortId ?? 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
     setNieuwDoelModal(type);
   };
 
@@ -216,8 +226,8 @@ export function InrichtingPage() {
             <div className="ip-zaak-header">
               <h2 className="ip-zaak-naam-groot">{selectedZaaksoort.naam}</h2>
               <div className="ip-zaak-stats">
-                <span>{aantalActief('prestatie')} prestatie indicator{aantalActief('prestatie') !== 1 ? 'en' : ''} actief</span>
-                <span>{aantalActief('inrichting')} inrichting indicator{aantalActief('inrichting') !== 1 ? 'en' : ''} actief</span>
+                <span>{aantalGemeten('prestatie')}/{aantalRelevant('prestatie')} prestatie gemeten</span>
+                <span>{aantalGemeten('inrichting')}/{aantalRelevant('inrichting')} inrichting gemeten</span>
               </div>
             </div>
             {selectedZaaksoort.omschrijving && (
@@ -260,35 +270,53 @@ export function InrichtingPage() {
           <div className="ip-prestatie-panel">
             <div className="ip-panel-header">
               <span className="ip-section-label">PRESTATIE-INDICATOREN (Y-AS)</span>
-              <span className="ip-actief-count">{aantalActief('prestatie')} actief</span>
+              <span className="ip-actief-count">{aantalGemeten('prestatie')}/{aantalRelevant('prestatie')} gemeten</span>
             </div>
             <div className="ip-ind-lijst">
-              {prestatieDoelen.map(md => {
-                const ind = indicatoren.find(i => i.id === md.domeinIndicatorId);
+              {indicatoren.filter(ind => ind.type === 'prestatie').map(ind => {
+                const md = doelen.find(d => d.domeinIndicatorId === ind.id) ?? null;
+
+                /* ── Staat 1: Beschikbaar — gekoppeld aan domein, nog geen metingsdoel ── */
+                if (!md) {
+                  return (
+                    <div key={ind.id} className="ip-ind-item grijs" onClick={() => openNieuwDoel('prestatie', ind.id)} title="Klik om toe te voegen aan deze zaaksoort">
+                      <div className="ip-ind-top">
+                        <span className="ip-dot" />
+                        <span className="ip-ind-naam">{ind.indicatorNaam}</span>
+                      </div>
+                      <div className="ip-activeer-hint">Klik om toe te voegen</div>
+                    </div>
+                  );
+                }
+
+                /* ── Staat 2 & 3: Relevant / Gemeten ── */
                 const meting = metingVoorDoel(md.id);
                 const delta = trend(md.id);
                 const editingThis = metingInput?.doelId === md.id;
-                const isActief = !!meting;
+                const sl = meting ? stoplicht(meting.waarde, md.normWaarde, md.normRichting) : null;
+                const itemClass = sl ? `ip-ind-item sl-${sl}` : 'ip-ind-item relevant';
+                const dotClass = sl ? `ip-dot sl-dot-${sl}` : 'ip-dot ip-dot-relevant';
+
                 return (
-                  <div key={md.id} className={`ip-ind-item ${isActief ? 'actief' : ''}`}>
+                  <div key={md.id} className={itemClass}>
                     <div className="ip-ind-top">
-                      <span className={`ip-dot ${isActief ? 'actief' : ''}`} />
-                      <span className="ip-ind-naam">{ind?.indicatorNaam ?? md.indicatorNaam}</span>
-                      {isActief && <span className="ip-actief-badge">actief</span>}
+                      <span className={dotClass} />
+                      <span className="ip-ind-naam">{ind.indicatorNaam}</span>
+                      {sl && <span className={`ip-actief-badge sl-badge-${sl}`}>gemeten</span>}
                       <button className="ip-deact-btn" onClick={() => deactiveerDoel(md)} title="Deactiveren">×</button>
                     </div>
                     <div className="ip-ind-meta">
                       Norm: {normLabel(md)} · Gewicht: {md.gewicht}
                     </div>
-                    {isActief && !editingThis && (
+                    {meting && !editingThis && (
                       <div className="ip-ind-waarde-row">
-                        <span className="ip-ist-waarde">{meting!.waarde} {ind?.eenheid}</span>
+                        <span className="ip-ist-waarde">{meting.waarde} {ind.eenheid}</span>
                         {delta !== null && (
                           <span className={`ip-trend ${(md.normRichting === 'lagerisbeter' ? delta < 0 : delta > 0) ? 'beter' : 'slechter'}`}>
-                            {delta < 0 ? '↓' : '↑'} {Math.abs(delta)} {ind?.eenheid}
+                            {delta < 0 ? '↓' : '↑'} {Math.abs(delta)} {ind.eenheid}
                           </span>
                         )}
-                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting!.waarde) })}>bewerken</button>
+                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde) })}>bewerken</button>
                       </div>
                     )}
                     {editingThis ? (
@@ -296,11 +324,11 @@ export function InrichtingPage() {
                         className="ip-meting-input"
                         autoFocus
                         defaultValue={meting?.waarde ?? ''}
-                        placeholder={`waarde in ${ind?.eenheid ?? ''}`}
+                        placeholder={`waarde in ${ind.eenheid ?? ''}`}
                         onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setMetingInput(null); }}
                         onBlur={e => slaMetingOp(md.id, e.target.value)}
                       />
-                    ) : !isActief ? (
+                    ) : !meting ? (
                       <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '' })}>+ meting toevoegen</button>
                     ) : null}
                   </div>
@@ -319,25 +347,45 @@ export function InrichtingPage() {
               <button className="ip-add-sm-btn" onClick={() => openNieuwDoel('inrichting')}>+ toevoegen</button>
             </div>
             <div className="ip-cards-grid">
-              {inrichtingDoelen.map(md => {
-                const ind = indicatoren.find(i => i.id === md.domeinIndicatorId);
+              {indicatoren.filter(ind => ind.type === 'inrichting').map(ind => {
+                const md = doelen.find(d => d.domeinIndicatorId === ind.id) ?? null;
+
+                /* ── Staat 1: Beschikbaar ── */
+                if (!md) {
+                  return (
+                    <div key={ind.id} className="ip-ind-card grijs" onClick={() => openNieuwDoel('inrichting', ind.id)} title="Klik om toe te voegen aan deze zaaksoort">
+                      <div className="ip-card-top">
+                        <span className="ip-ind-naam">{ind.indicatorNaam}</span>
+                        <div className="ip-card-top-right">
+                          <span className="ip-dot" />
+                        </div>
+                      </div>
+                      <div className="ip-activeer-hint">Klik om toe te voegen</div>
+                    </div>
+                  );
+                }
+
+                /* ── Staat 2 & 3: Relevant / Gemeten ── */
                 const meting = metingVoorDoel(md.id);
                 const editingThis = metingInput?.doelId === md.id;
-                const isActief = !!meting;
+                const sl = meting ? stoplicht(meting.waarde, md.normWaarde, md.normRichting) : null;
+                const cardClass = sl ? `ip-ind-card sl-${sl}` : 'ip-ind-card relevant';
+                const dotClass = sl ? `ip-dot sl-dot-${sl}` : 'ip-dot ip-dot-relevant';
+
                 return (
-                  <div key={md.id} className={`ip-ind-card ${isActief ? 'actief' : ''}`}>
+                  <div key={md.id} className={cardClass}>
                     <div className="ip-card-top">
-                      <span className="ip-ind-naam">{ind?.indicatorNaam ?? md.indicatorNaam}</span>
+                      <span className="ip-ind-naam">{ind.indicatorNaam}</span>
                       <div className="ip-card-top-right">
-                        <span className={`ip-dot ${isActief ? 'actief' : ''}`} />
+                        <span className={dotClass} />
                         <button className="ip-deact-btn" onClick={() => deactiveerDoel(md)} title="Deactiveren">×</button>
                       </div>
                     </div>
                     <div className="ip-ind-meta">Norm: {normLabel(md)}</div>
-                    {isActief && !editingThis && (
+                    {meting && !editingThis && (
                       <>
-                        <div className="ip-card-waarde">{meting!.waarde}{ind?.eenheid}</div>
-                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting!.waarde) })}>+ meting</button>
+                        <div className={`ip-card-waarde ${sl ? `sl-waarde-${sl}` : ''}`}>{meting.waarde}{ind.eenheid}</div>
+                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde) })}>bewerken</button>
                       </>
                     )}
                     {editingThis ? (
@@ -345,20 +393,22 @@ export function InrichtingPage() {
                         className="ip-meting-input"
                         autoFocus
                         defaultValue={meting?.waarde ?? ''}
-                        placeholder={ind?.eenheid ?? 'waarde'}
+                        placeholder={ind.eenheid ?? 'waarde'}
                         onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setMetingInput(null); }}
                         onBlur={e => slaMetingOp(md.id, e.target.value)}
                       />
-                    ) : !isActief ? (
+                    ) : !meting ? (
                       <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '' })}>+ meting</button>
                     ) : null}
                   </div>
                 );
               })}
-              {/* Extra kaart: indicator toevoegen */}
-              <div className="ip-ind-card ip-card-add" onClick={() => openNieuwDoel('inrichting')}>
-                <span>+ indicator<br />toevoegen</span>
-              </div>
+              {/* Extra kaart: indicator toevoegen (alleen als er nog beschikbare indicatoren zijn) */}
+              {beschikbareIndicatoren('inrichting').length > 0 && (
+                <div className="ip-ind-card ip-card-add" onClick={() => openNieuwDoel('inrichting')}>
+                  <span>+ indicator<br />toevoegen</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

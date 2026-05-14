@@ -508,6 +508,68 @@
   background: var(--color-primary-light);
 }
 
+/* ── Drie-staat indicator systeem ── */
+
+/* Staat 1: Beschikbaar (domein-gekoppeld, nog geen metingsdoel voor deze zaaksoort) */
+.ip-ind-item.grijs,
+.ip-ind-card.grijs {
+  opacity: 0.5;
+  border-style: dashed;
+  cursor: pointer;
+  background: var(--color-bg);
+}
+
+.ip-ind-item.grijs:hover,
+.ip-ind-card.grijs:hover {
+  opacity: 0.85;
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.ip-activeer-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* Staat 2: Relevant (metingsdoel bestaat, nog geen meting) */
+.ip-ind-item.relevant {
+  border-color: var(--color-primary);
+  background: var(--color-bg);
+}
+
+.ip-ind-card.relevant {
+  border-color: var(--color-primary);
+  background: var(--color-bg);
+}
+
+.ip-dot.ip-dot-relevant {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Staat 3: Gemeten — stoplicht */
+.ip-dot.sl-dot-groen  { background: #16a34a; border-color: #16a34a; }
+.ip-dot.sl-dot-oranje { background: #ea580c; border-color: #ea580c; }
+.ip-dot.sl-dot-rood   { background: #dc2626; border-color: #dc2626; }
+
+.ip-ind-item.sl-groen  { border-color: #a7f3d0; background: #f0fdf4; }
+.ip-ind-item.sl-oranje { border-color: #fed7aa; background: #fff7ed; }
+.ip-ind-item.sl-rood   { border-color: #fecaca; background: #fef2f2; }
+
+.ip-ind-card.sl-groen  { border-color: #a7f3d0; background: #f0fdf4; }
+.ip-ind-card.sl-oranje { border-color: #fed7aa; background: #fff7ed; }
+.ip-ind-card.sl-rood   { border-color: #fecaca; background: #fef2f2; }
+
+.ip-actief-badge.sl-badge-groen  { background: #16a34a; }
+.ip-actief-badge.sl-badge-oranje { background: #ea580c; }
+.ip-actief-badge.sl-badge-rood   { background: #dc2626; }
+
+.ip-card-waarde.sl-waarde-groen  { color: #16a34a; }
+.ip-card-waarde.sl-waarde-oranje { color: #ea580c; }
+.ip-card-waarde.sl-waarde-rood   { color: #dc2626; }
+
 /* ── Gedeelde utilities ── */
 .ip-section-label {
   font-size: var(--text-xs);
