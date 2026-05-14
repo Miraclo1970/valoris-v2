@@ -134,7 +134,7 @@
 /* ── Driekoloms matrix area ── */
 .sp-matrix-area {
   display: grid;
-  grid-template-columns: 160px 1fr 200px;
+  grid-template-columns: 190px 1fr 200px;
   gap: var(--space-4);
   align-items: start;
 }
@@ -179,6 +179,8 @@
 .sp-ind-naam {
   font-size: var(--text-xs);
   color: var(--color-text);
+  word-break: break-word;
+  min-width: 0;
 }
 
 /* Midden: chart */
