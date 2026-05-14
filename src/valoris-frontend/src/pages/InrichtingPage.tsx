@@ -133,20 +133,23 @@ export function InrichtingPage() {
     await laad();
   };
 
-  // Geeft DomeinIndicatoren terug voor dit domein, aangevuld vanuit de bibliotheek als er nog geen gekoppeld zijn
-  const beschikbareIndicatoren = (type: 'prestatie' | 'inrichting') => {
-    const gekoppeld = indicatoren.filter(i => i.type === type && !doelen.some(d => d.domeinIndicatorId === i.id));
-    if (gekoppeld.length > 0) return gekoppeld;
-    // Bibliotheek-indicatoren die nog niet aan dit domein gekoppeld zijn
-    return bibliotheek
+  // Altijd alle bibliotheek-indicatoren van dit type aanbieden die nog niet als metingsdoel voor deze zaaksoort bestaan.
+  // Als de indicator al aan het domein gekoppeld is, gebruik die DomeinIndicator; anders negatieve ID (auto-koppelen bij opslaan).
+  const beschikbareIndicatoren = (type: 'prestatie' | 'inrichting') =>
+    bibliotheek
       .filter(b => b.type === type)
-      .filter(b => !indicatoren.some(i => i.indicatorId === b.id))
-      .map(b => ({
-        id: -b.id, // negatief = nog niet gekoppeld, wordt auto-gekoppeld bij opslaan
-        domeinId: id, indicatorId: b.id, indicatorNaam: b.naam,
-        type: b.type, eenheid: b.eenheid, aggregatiewijze: b.aggregatiewijze, actief: true,
-      } as DomeinIndicator));
-  };
+      .filter(b => !doelen.some(d => {
+        const di = indicatoren.find(i => i.id === d.domeinIndicatorId);
+        return di?.indicatorId === b.id;
+      }))
+      .map(b => {
+        const bestaand = indicatoren.find(i => i.indicatorId === b.id);
+        return bestaand ?? {
+          id: -b.id, // negatief = nog niet gekoppeld, wordt auto-gekoppeld bij opslaan
+          domeinId: id, indicatorId: b.id, indicatorNaam: b.naam,
+          type: b.type, eenheid: b.eenheid, aggregatiewijze: b.aggregatiewijze, actief: true,
+        } as DomeinIndicator;
+      });
 
   const openNieuwDoel = (type: 'prestatie' | 'inrichting') => {
     setDoelForm({ domeinIndicatorId: beschikbareIndicatoren(type)[0]?.id ?? 0, zaaksoortId: selectedZaaksoortId ?? 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
