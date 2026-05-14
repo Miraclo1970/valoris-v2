@@ -11,8 +11,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   const res = await fetch(BASE + path, {
-    headers: { 'Content-Type': 'application/json', ...authHeader, ...init?.headers },
     ...init,
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', ...authHeader, ...init?.headers },
   });
   if (res.status === 401) {
     sessionStorage.removeItem('valoris_user');

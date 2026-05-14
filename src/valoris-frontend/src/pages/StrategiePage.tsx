@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getStrategie, getPeriodes, type Strategie, type HuidigePeriode } from '../api/client';
 import { MatrixChart } from '../components/MatrixChart';
 import './StrategiePage.css';
@@ -20,6 +20,7 @@ export function StrategiePage() {
   const { domeinId } = useParams<{ domeinId: string }>();
   const id = parseInt(domeinId!);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [periodes, setPeriodes] = useState<HuidigePeriode[]>([]);
   const [selectedPeriodeId, setSelectedPeriodeId] = useState<number | undefined>();
@@ -35,16 +36,17 @@ export function StrategiePage() {
 
   useEffect(() => {
     setLoading(true);
+    setSelectedIds([]);          // reset selectie bij nieuwe navigatie
     getStrategie(id, selectedPeriodeId)
       .then(s => {
         setStrategie(s);
-        setSelectedIds(prev =>
-          prev.length > 0 ? prev : s.zaaksoorten.slice(0, MAX_SELECTIE).map(z => z.zaaksoortId)
-        );
+        setSelectedIds(s.zaaksoorten.slice(0, MAX_SELECTIE).map(z => z.zaaksoortId));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [id, selectedPeriodeId]);
+  // location.key garandeert een nieuwe fetch bij elke navigatie naar deze pagina
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, selectedPeriodeId, location.key]);
 
   if (loading) return <div className="sp-loading">Laden…</div>;
   if (!strategie) return null;
