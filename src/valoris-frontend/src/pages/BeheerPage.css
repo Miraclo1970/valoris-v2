@@ -151,8 +151,14 @@
 
 .bp-btn-ghost:hover { background: var(--color-bg); }
 .bp-btn-sm { padding: 3px 10px; font-size: var(--text-xs); }
-.bp-btn-icon { padding: 2px 5px; font-size: var(--text-xs); min-width: 22px; }
-.bp-btn-icon:disabled { opacity: 0.25; cursor: default; }
+.bp-btn-icon {
+  padding: 4px 8px;
+  font-size: 1rem;
+  min-width: 30px;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+}
+.bp-btn-icon:disabled { opacity: 0.2; cursor: default; }
 
 /* ── Table ── */
 .bp-table {

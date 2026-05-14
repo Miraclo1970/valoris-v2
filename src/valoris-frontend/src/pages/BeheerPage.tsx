@@ -215,8 +215,8 @@ function ZaaksoortTab() {
         <tbody>
           {zaaksoorten.map((z, idx) => (
             <tr key={z.id}>
-              <td className="bp-muted">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <td>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <button
                     className="bp-btn-ghost bp-btn-icon"
                     onClick={() => verschuif(z, 'omhoog')}
@@ -229,7 +229,7 @@ function ZaaksoortTab() {
                     disabled={idx === zaaksoorten.length - 1}
                     title="Omlaag"
                   >↓</button>
-                  <span style={{ minWidth: 20, textAlign: 'center' }}>{z.volgorde}</span>
+                  <span className="bp-muted" style={{ minWidth: 24, textAlign: 'center', fontSize: 'var(--text-sm)' }}>{z.volgorde}</span>
                 </div>
               </td>
               <td>{z.icoon && <span style={{ marginRight: 6 }}>{z.icoon}</span>}<strong>{z.naam}</strong><br /><span className="bp-muted">{z.omschrijving}</span></td>
