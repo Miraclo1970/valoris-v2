@@ -441,6 +441,8 @@ function GebruikersTab() {
   const [form, setForm] = useState({ naam: '', email: '', wachtwoord: '' });
   const [rolForm, setRolForm] = useState({ domeinId: 0, rol: 'lezer' });
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [wachtwoordId, setWachtwoordId] = useState<number | null>(null);
+  const [nieuwWachtwoord, setNieuwWachtwoord] = useState('');
   const [saving, setSaving] = useState(false);
   const [fout, setFout] = useState('');
 
@@ -474,10 +476,11 @@ function GebruikersTab() {
     if (gebruikerId === user?.id) await refreshRollen();
   };
 
-  const resetWachtwoord = async (gebruikerId: number) => {
-    const nieuw = prompt('Nieuw wachtwoord:');
-    if (!nieuw) return;
-    await wijzigWachtwoord(gebruikerId, nieuw);
+  const slaWachtwoordOp = async (gebruikerId: number) => {
+    if (!nieuwWachtwoord) return;
+    setSaving(true);
+    try { await wijzigWachtwoord(gebruikerId, nieuwWachtwoord); setWachtwoordId(null); setNieuwWachtwoord(''); }
+    finally { setSaving(false); }
   };
 
   return (
@@ -526,7 +529,7 @@ function GebruikersTab() {
                 <td>
                   <div style={{ display: 'flex', gap: 4 }}>
                     <button className="bp-btn-ghost bp-btn-sm" onClick={() => setExpandedId(expandedId === g.id ? null : g.id)}>+ Rol</button>
-                    <button className="bp-btn-ghost bp-btn-sm" onClick={() => resetWachtwoord(g.id)}>Wachtwoord</button>
+                    <button className="bp-btn-ghost bp-btn-sm" onClick={() => { setWachtwoordId(wachtwoordId === g.id ? null : g.id); setNieuwWachtwoord(''); }}>Wachtwoord</button>
                   </div>
                 </td>
               </tr>
@@ -541,6 +544,17 @@ function GebruikersTab() {
                         {ROLLEN.map(r => <option key={r} value={r}>{r}</option>)}
                       </select>
                       <button className="bp-btn-primary bp-btn-sm" onClick={() => saveRol(g.id)} disabled={saving}>Koppelen</button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {wachtwoordId === g.id && (
+                <tr key={`${g.id}-ww`}>
+                  <td colSpan={4}>
+                    <div className="bp-rol-form">
+                      <input className="bp-input bp-input-sm" type="password" placeholder="Nieuw wachtwoord" value={nieuwWachtwoord} onChange={e => setNieuwWachtwoord(e.target.value)} autoFocus />
+                      <button className="bp-btn-primary bp-btn-sm" onClick={() => slaWachtwoordOp(g.id)} disabled={saving || !nieuwWachtwoord}>Opslaan</button>
+                      <button className="bp-btn-ghost bp-btn-sm" onClick={() => { setWachtwoordId(null); setNieuwWachtwoord(''); }}>Annuleren</button>
                     </div>
                   </td>
                 </tr>
