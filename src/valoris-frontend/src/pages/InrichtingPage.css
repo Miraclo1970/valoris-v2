@@ -334,6 +334,20 @@
   font-weight: 600;
 }
 
+.ip-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.45;
+  transition: opacity 0.1s, color 0.1s;
+}
+
+.ip-edit-btn:hover { opacity: 1; color: var(--color-primary); }
+
 .ip-deact-btn {
   background: none;
   border: none;

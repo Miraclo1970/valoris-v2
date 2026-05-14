@@ -6,7 +6,7 @@ import {
   createMetingsdoel, updateMetingsdoel, createMeting, updateMeting,
   getPeriodes, getDomeinen,
   type Zaaksoort, type DomeinIndicator, type Indicator, type Metingsdoel, type Meting,
-  type HuidigePeriode, type MetingsdoelCreate,
+  type HuidigePeriode, type MetingsdoelCreate, type MetingsdoelUpdate,
 } from '../api/client';
 import { Modal } from '../components/Modal';
 import './InrichtingPage.css';
@@ -57,6 +57,8 @@ export function InrichtingPage() {
   const [metingInput, setMetingInput] = useState<{ doelId: number; waarde: string } | null>(null);
   const [nieuwDoelModal, setNieuwDoelModal] = useState<'prestatie' | 'inrichting' | null>(null);
   const [doelForm, setDoelForm] = useState<MetingsdoelCreate>({ domeinIndicatorId: 0, zaaksoortId: 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
+  const [bewerkDoel, setBewerkDoel] = useState<Metingsdoel | null>(null);
+  const [bewerkForm, setBewerkForm] = useState<MetingsdoelUpdate>({ normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1, actief: true });
   const [fout, setFout] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -160,6 +162,25 @@ export function InrichtingPage() {
       await laad();
     } catch {
       setFout('Deactiveren mislukt. Probeer opnieuw.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openBewerkDoel = (md: Metingsdoel) => {
+    setBewerkForm({ normWaarde: md.normWaarde, normRichting: md.normRichting, gewicht: md.gewicht, actief: md.actief });
+    setBewerkDoel(md);
+  };
+
+  const slaBewerktDoelOp = async () => {
+    if (!bewerkDoel) return;
+    setSaving(true); setFout(null);
+    try {
+      await updateMetingsdoel(bewerkDoel.id, bewerkForm);
+      await laad();
+      setBewerkDoel(null);
+    } catch {
+      setFout('Opslaan mislukt. Controleer je verbinding en probeer opnieuw.');
     } finally {
       setSaving(false);
     }
@@ -303,6 +324,7 @@ export function InrichtingPage() {
                       <span className={dotClass} />
                       <span className="ip-ind-naam">{ind.indicatorNaam}</span>
                       {sl && <span className={`ip-actief-badge sl-badge-${sl}`}>gemeten</span>}
+                      <button className="ip-edit-btn" onClick={() => openBewerkDoel(md)} title="Norm/gewicht bewerken">✎</button>
                       <button className="ip-deact-btn" onClick={() => deactiveerDoel(md)} title="Deactiveren">×</button>
                     </div>
                     <div className="ip-ind-meta">
@@ -378,6 +400,7 @@ export function InrichtingPage() {
                       <span className="ip-ind-naam">{ind.indicatorNaam}</span>
                       <div className="ip-card-top-right">
                         <span className={dotClass} />
+                        <button className="ip-edit-btn" onClick={() => openBewerkDoel(md)} title="Norm/gewicht bewerken">✎</button>
                         <button className="ip-deact-btn" onClick={() => deactiveerDoel(md)} title="Deactiveren">×</button>
                       </div>
                     </div>
@@ -413,6 +436,40 @@ export function InrichtingPage() {
           </div>
         </div>
       )}
+
+      {/* Modal: norm/gewicht bewerken */}
+      {bewerkDoel && (() => {
+        const ind = indicatoren.find(i => i.id === bewerkDoel.domeinIndicatorId);
+        return (
+          <Modal
+            title={`Bewerken — ${ind?.indicatorNaam ?? bewerkDoel.indicatorNaam}`}
+            onClose={() => setBewerkDoel(null)}
+            footer={
+              <>
+                <button className="btn-secondary" onClick={() => setBewerkDoel(null)} disabled={saving}>Annuleren</button>
+                <button className="btn-primary" onClick={slaBewerktDoelOp} disabled={saving}>{saving ? 'Bezig…' : 'Opslaan'}</button>
+              </>
+            }
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
+              <div className="form-row">
+                <label>Normwaarde</label>
+                <input type="number" value={bewerkForm.normWaarde} onChange={e => setBewerkForm(f => ({ ...f, normWaarde: +e.target.value }))} step="0.01" />
+              </div>
+              <div className="form-row">
+                <label>Richting</label>
+                <select value={bewerkForm.normRichting} onChange={e => setBewerkForm(f => ({ ...f, normRichting: e.target.value }))}>
+                  {NORM_RICHTING.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <label>Gewicht</label>
+                <input type="number" value={bewerkForm.gewicht} onChange={e => setBewerkForm(f => ({ ...f, gewicht: +e.target.value }))} step="0.1" min="0" />
+              </div>
+            </div>
+          </Modal>
+        );
+      })()}
 
       {/* Modal: nieuw metingsdoel */}
       {nieuwDoelModal && (
