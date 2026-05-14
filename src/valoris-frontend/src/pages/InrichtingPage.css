@@ -584,6 +584,42 @@
 .ip-card-waarde.sl-waarde-oranje { color: #ea580c; }
 .ip-card-waarde.sl-waarde-rood   { color: #dc2626; }
 
+/* ── Huidige periode badge ── */
+.ip-huidig-badge {
+  display: inline-block;
+  margin-left: var(--space-1);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  color: #fff;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+/* ── Stoplicht legenda tooltip ── */
+.ip-legenda-tip {
+  margin-left: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  cursor: default;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── Lege staat ── */
+.ip-leeg-staat {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-4);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius);
+  line-height: 1.6;
+  text-align: center;
+}
+
 /* ── Gedeelde utilities ── */
 .ip-section-label {
   font-size: var(--text-xs);

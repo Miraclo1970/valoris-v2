@@ -89,6 +89,12 @@ export function InrichtingPage() {
   const huidigePeriode = periodes[periodeIdx] ?? null;
   const vorigePeriode = periodes[periodeIdx + 1] ?? null;
 
+  // Welke periode is vandaag? (voor "huidig" markering in navigatie)
+  const today = new Date();
+  const echteHuidigePeriode = periodes.find(p =>
+    new Date(p.startdatum) <= today && today <= new Date(p.einddatum)
+  ) ?? null;
+
   const selectedZaaksoort = zaaksoorten.find(z => z.id === selectedZaaksoortId);
   const doelen = metingsdoelen.filter(m => m.zaaksoortId === selectedZaaksoortId);
 
@@ -282,7 +288,12 @@ export function InrichtingPage() {
             <p className="ip-section-label">Periode navigatie</p>
             <div className="ip-periode-controls">
               <button className="ip-nav-btn" onClick={() => setPeriodeIdx(i => Math.min(i + 1, periodes.length - 1))} disabled={periodeIdx >= periodes.length - 1}>‹</button>
-              <span className="ip-periode-naam">{huidigePeriode ? periodeNaam(huidigePeriode, periodeType) : '—'}</span>
+              <span className="ip-periode-naam">
+                {huidigePeriode ? periodeNaam(huidigePeriode, periodeType) : '—'}
+                {huidigePeriode && echteHuidigePeriode?.id === huidigePeriode.id && (
+                  <span className="ip-huidig-badge">nu</span>
+                )}
+              </span>
               <button className="ip-nav-btn" onClick={() => setPeriodeIdx(i => Math.max(i - 1, 0))} disabled={periodeIdx <= 0}>›</button>
             </div>
           </div>
@@ -290,11 +301,21 @@ export function InrichtingPage() {
           {/* Rechts: prestatie-indicatoren */}
           <div className="ip-prestatie-panel">
             <div className="ip-panel-header">
-              <span className="ip-section-label">PRESTATIE-INDICATOREN (Y-AS)</span>
+              <span className="ip-section-label">
+                PRESTATIE-INDICATOREN (Y-AS)
+                <span className="ip-legenda-tip" title="Stoplicht: 🟢 waarde ≥ norm  |  🟠 80–99% van norm  |  🔴 onder 80% van norm">ⓘ</span>
+              </span>
               <span className="ip-actief-count">{aantalGemeten('prestatie')}/{aantalRelevant('prestatie')} gemeten</span>
             </div>
             <div className="ip-ind-lijst">
-              {indicatoren.filter(ind => ind.type === 'prestatie').map(ind => {
+              {indicatoren
+                .filter(ind => ind.type === 'prestatie')
+                .sort((a, b) => {
+                  const aActief = doelen.some(d => d.domeinIndicatorId === a.id) ? 0 : 1;
+                  const bActief = doelen.some(d => d.domeinIndicatorId === b.id) ? 0 : 1;
+                  return aActief - bActief;
+                })
+                .map(ind => {
                 const md = doelen.find(d => d.domeinIndicatorId === ind.id) ?? null;
 
                 /* ── Staat 1: Beschikbaar — gekoppeld aan domein, nog geen metingsdoel ── */
@@ -356,6 +377,12 @@ export function InrichtingPage() {
                   </div>
                 );
               })}
+              {indicatoren.filter(ind => ind.type === 'prestatie').length === 0 && (
+                <div className="ip-leeg-staat">
+                  Nog geen prestatie-indicatoren gekoppeld aan dit domein.<br />
+                  Ga naar <strong>Beheer → Ind. koppelen</strong> om indicatoren toe te voegen.
+                </div>
+              )}
             </div>
             <button className="ip-add-btn" onClick={() => openNieuwDoel('prestatie')}>
               + indicator toevoegen
@@ -369,7 +396,20 @@ export function InrichtingPage() {
               <button className="ip-add-sm-btn" onClick={() => openNieuwDoel('inrichting')}>+ toevoegen</button>
             </div>
             <div className="ip-cards-grid">
-              {indicatoren.filter(ind => ind.type === 'inrichting').map(ind => {
+              {indicatoren.filter(ind => ind.type === 'inrichting').length === 0 && (
+                <div className="ip-leeg-staat" style={{ gridColumn: '1 / -1' }}>
+                  Nog geen inrichtingsindicatoren gekoppeld aan dit domein.<br />
+                  Ga naar <strong>Beheer → Ind. koppelen</strong> om indicatoren toe te voegen.
+                </div>
+              )}
+              {indicatoren
+                .filter(ind => ind.type === 'inrichting')
+                .sort((a, b) => {
+                  const aActief = doelen.some(d => d.domeinIndicatorId === a.id) ? 0 : 1;
+                  const bActief = doelen.some(d => d.domeinIndicatorId === b.id) ? 0 : 1;
+                  return aActief - bActief;
+                })
+                .map(ind => {
                 const md = doelen.find(d => d.domeinIndicatorId === ind.id) ?? null;
 
                 /* ── Staat 1: Beschikbaar ── */
