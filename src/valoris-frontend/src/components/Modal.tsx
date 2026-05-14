@@ -6,9 +6,10 @@ interface Props {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  wide?: boolean;
 }
 
-export function Modal({ title, onClose, children, footer }: Props) {
+export function Modal({ title, onClose, children, footer, wide }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -17,7 +18,7 @@ export function Modal({ title, onClose, children, footer }: Props) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className={`modal${wide ? ' modal-wide' : ''}`} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
           <button className="modal-close" onClick={onClose} aria-label="Sluiten">✕</button>

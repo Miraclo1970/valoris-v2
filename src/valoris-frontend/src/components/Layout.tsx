@@ -2,12 +2,14 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { getDomeinen, type Domein } from '../api/client';
 import { useEffect, useState } from 'react';
+import { HelpModal } from './HelpModal';
 import './Layout.css';
 
 export function Layout() {
   const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
   const [domeinen, setDomeinen] = useState<Domein[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     getDomeinen().then(setDomeinen).catch(() => {});
@@ -32,6 +34,7 @@ export function Layout() {
           </div>
         )}
         <div className="sidebar-footer">
+          <button className="sidebar-help-btn" onClick={() => setHelpOpen(true)}>? Help</button>
           <span className="sidebar-user">{user?.naam}</span>
           <button className="btn-secondary" onClick={handleLogout}>Uitloggen</button>
         </div>
@@ -39,6 +42,7 @@ export function Layout() {
       <main className="main-content">
         <Outlet />
       </main>
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </div>
   );
 }
