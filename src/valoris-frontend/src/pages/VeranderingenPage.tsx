@@ -382,12 +382,12 @@ function IndicatorGroep({ label, indicatoren, zaaksoortId, impactVoorDoel, doelV
         const editing = doel && editingImpact?.doelId === doel.id;
 
         return (
-          <div key={ind.id} className={`ind-rij ${imp ? 'heeft-impact' : ''}`}>
+          <div key={ind.id} className={`ind-rij ${imp ? 'heeft-impact' : ''} ${!doel ? 'geen-doel' : ''}`}>
             <div className="ind-dot" style={{ background: imp ? (imp.waarde >= 0 ? 'var(--color-success)' : 'var(--color-danger)') : 'var(--color-border)' }} />
             <span className="ind-naam">{ind.indicatorNaam}</span>
             <div className="ind-waarde">
               {!doel ? (
-                <span className="ind-geen-doel" title="Geen metingsdoel voor deze combinatie">—</span>
+                <span className="ind-geen-doel" title="Geen norm ingesteld voor deze zaaksoort — stel eerst een metingsdoel in via Inrichting">niet ingesteld</span>
               ) : editing ? (
                 <input
                   className="ind-input"

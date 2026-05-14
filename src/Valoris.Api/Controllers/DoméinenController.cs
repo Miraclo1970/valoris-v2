@@ -91,7 +91,7 @@ public class DoméinenController : ControllerBase
         return Ok(z.Id);
     }
 
-    [HttpPut("{id}/zaaksoorten/{zaaksoortId}")]
+    [HttpPut("{id}/zaaksoorten/{zaaksoortId:int}")]
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> UpdateZaaksoort(int id, int zaaksoortId, [FromBody] ZaaksoortCreate body)
     {
@@ -138,7 +138,7 @@ public class DoméinenController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("{id}/zaaksoorten/{zaaksoortId}/verplaats")]
+    [HttpPut("{id}/zaaksoorten/{zaaksoortId:int}/verplaats")]
     [Authorize(Roles = "beheerder")]
     public async Task<IActionResult> VerplaatsZaaksoort(int id, int zaaksoortId, [FromBody] VerplaatsBody body)
     {
