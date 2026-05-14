@@ -39,6 +39,7 @@ public record DomeinIndicatorDto(
 // --- Create/Update request bodies ---
 public record DomeinCreate(string Naam, string Omschrijving, string Basisperiode, decimal Interventiedrempel);
 public record ZaaksoortCreate(string Naam, string Omschrijving, string? Icoon, string? Behandeling);
+public record VerplaatsBody(string Richting); // "omhoog" | "omlaag"
 public record IndicatorCreate(string Naam, string Type, string Eenheid, string Aggregatiewijze);
 public record DomeinIndicatorCreate(int IndicatorId);
 public record PeriodeCreate(DateTime Startdatum, DateTime Einddatum, string Type);

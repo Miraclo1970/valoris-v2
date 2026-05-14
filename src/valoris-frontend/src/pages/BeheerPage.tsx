@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import {
   getDomeinen, createDomein, updateDomein,
-  getZaaksoorten, createZaaksoort, updateZaaksoort,
+  getZaaksoorten, createZaaksoort, updateZaaksoort, verplaatsZaaksoort,
   getAlleIndicatoren, createIndicator, updateIndicator,
   getIndicatoren, koppelIndicator, ontkoppelIndicator,
   getAllePeriodes, createPeriode, updatePeriode,
@@ -160,6 +160,12 @@ function ZaaksoortTab() {
     } finally { setSaving(false); }
   };
 
+  const verschuif = async (z: Zaaksoort, richting: 'omhoog' | 'omlaag') => {
+    if (!domeinId) return;
+    await verplaatsZaaksoort(domeinId, z.id, richting);
+    setZaaksoorten(await getZaaksoorten(domeinId));
+  };
+
   return (
     <div className="bp-tab-content">
       <div className="bp-tab-header">
@@ -205,11 +211,27 @@ function ZaaksoortTab() {
       )}
 
       <table className="bp-table">
-        <thead><tr><th>#</th><th>Naam</th><th>Behandeling</th><th></th></tr></thead>
+        <thead><tr><th>Volgorde</th><th>Naam</th><th>Behandeling</th><th></th></tr></thead>
         <tbody>
-          {zaaksoorten.map(z => (
+          {zaaksoorten.map((z, idx) => (
             <tr key={z.id}>
-              <td className="bp-muted">{z.volgorde}</td>
+              <td className="bp-muted">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button
+                    className="bp-btn-ghost bp-btn-icon"
+                    onClick={() => verschuif(z, 'omhoog')}
+                    disabled={idx === 0}
+                    title="Omhoog"
+                  >↑</button>
+                  <button
+                    className="bp-btn-ghost bp-btn-icon"
+                    onClick={() => verschuif(z, 'omlaag')}
+                    disabled={idx === zaaksoorten.length - 1}
+                    title="Omlaag"
+                  >↓</button>
+                  <span style={{ minWidth: 20, textAlign: 'center' }}>{z.volgorde}</span>
+                </div>
+              </td>
               <td>{z.icoon && <span style={{ marginRight: 6 }}>{z.icoon}</span>}<strong>{z.naam}</strong><br /><span className="bp-muted">{z.omschrijving}</span></td>
               <td>{z.behandeling && <span className="bp-tag">{z.behandeling}</span>}</td>
               <td><button className="bp-btn-ghost bp-btn-sm" onClick={() => openEdit(z)}>Bewerken</button></td>

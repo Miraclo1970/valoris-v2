@@ -120,6 +120,28 @@ public class DoméinenController : ControllerBase
         return Ok(zaaksoorten);
     }
 
+    [HttpPut("{id}/zaaksoorten/{zaaksoortId}/verplaats")]
+    [Authorize(Roles = "beheerder")]
+    public async Task<IActionResult> VerplaatsZaaksoort(int id, int zaaksoortId, [FromBody] VerplaatsBody body)
+    {
+        var zaaksoorten = await _db.Zaaksoorten
+            .Where(z => z.DomeinId == id && z.Actief)
+            .OrderBy(z => z.Volgorde)
+            .ToListAsync();
+
+        var idx = zaaksoorten.FindIndex(z => z.Id == zaaksoortId);
+        if (idx < 0) return NotFound();
+
+        var swapIdx = body.Richting == "omhoog" ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= zaaksoorten.Count) return BadRequest("Kan niet verder verschuiven");
+
+        (zaaksoorten[idx].Volgorde, zaaksoorten[swapIdx].Volgorde) =
+            (zaaksoorten[swapIdx].Volgorde, zaaksoorten[idx].Volgorde);
+
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpGet("{id}/periodes")]
     public async Task<IActionResult> GetPeriodes(int id)
     {
