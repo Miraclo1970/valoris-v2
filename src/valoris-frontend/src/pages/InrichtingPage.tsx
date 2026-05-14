@@ -328,7 +328,10 @@ export function InrichtingPage() {
                   <div key={md.id} className={`ip-ind-card ${isActief ? 'actief' : ''}`}>
                     <div className="ip-card-top">
                       <span className="ip-ind-naam">{ind?.indicatorNaam ?? md.indicatorNaam}</span>
-                      <span className={`ip-dot ${isActief ? 'actief' : ''}`} />
+                      <div className="ip-card-top-right">
+                        <span className={`ip-dot ${isActief ? 'actief' : ''}`} />
+                        <button className="ip-deact-btn" onClick={() => deactiveerDoel(md)} title="Deactiveren">×</button>
+                      </div>
                     </div>
                     <div className="ip-ind-meta">Norm: {normLabel(md)}</div>
                     {isActief && !editingThis && (

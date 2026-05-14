@@ -471,6 +471,15 @@
 .ip-card-top .ip-ind-naam {
   font-weight: 600;
   font-size: var(--text-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.ip-card-top-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
 }
 
 .ip-card-waarde {
