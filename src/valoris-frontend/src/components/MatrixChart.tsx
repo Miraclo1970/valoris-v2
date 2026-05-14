@@ -202,7 +202,7 @@ export function MatrixChart({ zaaksoorten, selectedIds, interventiedrempel = 60 
   const tz = tooltip?.zaaksoort;
 
   return (
-    <div ref={wrapRef} style={{ width: '100%', position: 'relative' }}>
+    <div ref={wrapRef} style={{ width: '100%', position: 'relative', overflow: 'hidden' }}>
       <canvas
         ref={canvasRef}
         style={{ display: 'block' }}
