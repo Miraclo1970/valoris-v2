@@ -493,6 +493,18 @@ function PeriodesTab() {
     } finally { setSaving(false); }
   };
 
+  const genereerMaanden = async () => {
+    setSaving(true);
+    try {
+      for (let m = 1; m <= 12; m++) {
+        const datums = berekenDatums('maand', genereerJaar, m);
+        const bestaat = periodes.some(p => p.startdatum.startsWith(datums.startdatum));
+        if (!bestaat) await createPeriode({ type: 'maand', ...datums });
+      }
+      await load();
+    } finally { setSaving(false); }
+  };
+
   const { startdatum, einddatum } = berekenDatums(type, jaar, nr);
 
   return (
@@ -505,6 +517,9 @@ function PeriodesTab() {
           </select>
           <button className="bp-btn-ghost" onClick={genereerKwartalen} disabled={saving} title="Maakt Q1–Q4 aan voor dit jaar (overslaat bestaande)">
             Genereer kwartalen
+          </button>
+          <button className="bp-btn-ghost" onClick={genereerMaanden} disabled={saving} title="Maakt jan–dec aan voor dit jaar (overslaat bestaande)">
+            Genereer maanden
           </button>
           <button className="bp-btn-primary" onClick={openAdd}>+ Nieuw</button>
         </div>
