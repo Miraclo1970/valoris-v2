@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import {
   getDomeinen, createDomein, updateDomein,
-  getZaaksoorten, createZaaksoort, updateZaaksoort, verplaatsZaaksoort,
+  getZaaksoorten, createZaaksoort, updateZaaksoort, herordZaaksoorten,
   getAlleIndicatoren, createIndicator, updateIndicator,
   getIndicatoren, koppelIndicator, ontkoppelIndicator,
   getAllePeriodes, createPeriode, updatePeriode,
@@ -141,6 +141,9 @@ function ZaaksoortTab() {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<ZaaksoortCreate>({ naam: '', omschrijving: '', icoon: '', behandeling: '' });
   const [saving, setSaving] = useState(false);
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const dragNode = useRef<HTMLTableRowElement | null>(null);
 
   useEffect(() => { getDomeinen().then(d => { setDomeinen(d); if (d.length > 0) setDomeinId(d[0].id); }); }, []);
   useEffect(() => { if (domeinId) getZaaksoorten(domeinId).then(setZaaksoorten); }, [domeinId]);
@@ -160,10 +163,44 @@ function ZaaksoortTab() {
     } finally { setSaving(false); }
   };
 
-  const verschuif = async (z: Zaaksoort, richting: 'omhoog' | 'omlaag') => {
-    if (!domeinId) return;
-    await verplaatsZaaksoort(domeinId, z.id, richting);
-    setZaaksoorten(await getZaaksoorten(domeinId));
+  const onDragStart = (e: React.DragEvent<HTMLTableRowElement>, id: number) => {
+    setDragId(id);
+    dragNode.current = e.currentTarget;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => { if (dragNode.current) dragNode.current.classList.add('bp-row-dragging'); }, 0);
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLTableRowElement>, id: number) => {
+    e.preventDefault();
+    if (id !== dragId) setDragOverId(id);
+  };
+
+  const onDrop = async (e: React.DragEvent<HTMLTableRowElement>, targetId: number) => {
+    e.preventDefault();
+    if (!domeinId || dragId === null || dragId === targetId) return;
+
+    const vorigeVolgorde = [...zaaksoorten];
+    const nieuw = [...zaaksoorten];
+    const vanIdx = nieuw.findIndex(z => z.id === dragId);
+    const naarIdx = nieuw.findIndex(z => z.id === targetId);
+    const [item] = nieuw.splice(vanIdx, 1);
+    nieuw.splice(naarIdx, 0, item);
+    setZaaksoorten(nieuw);
+    setDragId(null);
+    setDragOverId(null);
+
+    try {
+      await herordZaaksoorten(domeinId, nieuw.map(z => z.id));
+    } catch {
+      setZaaksoorten(vorigeVolgorde);
+    }
+  };
+
+  const onDragEnd = () => {
+    if (dragNode.current) dragNode.current.classList.remove('bp-row-dragging');
+    dragNode.current = null;
+    setDragId(null);
+    setDragOverId(null);
   };
 
   return (
@@ -211,26 +248,20 @@ function ZaaksoortTab() {
       )}
 
       <table className="bp-table">
-        <thead><tr><th>Volgorde</th><th>Naam</th><th>Behandeling</th><th></th></tr></thead>
+        <thead><tr><th style={{ width: 40 }}></th><th>Naam</th><th>Behandeling</th><th></th></tr></thead>
         <tbody>
-          {zaaksoorten.map((z, idx) => (
-            <tr key={z.id}>
+          {zaaksoorten.map((z) => (
+            <tr
+              key={z.id}
+              draggable
+              onDragStart={e => onDragStart(e, z.id)}
+              onDragOver={e => onDragOver(e, z.id)}
+              onDrop={e => onDrop(e, z.id)}
+              onDragEnd={onDragEnd}
+              className={dragOverId === z.id ? 'bp-row-drag-over' : ''}
+            >
               <td>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <button
-                    className="bp-btn-ghost bp-btn-icon"
-                    onClick={() => verschuif(z, 'omhoog')}
-                    disabled={idx === 0}
-                    title="Omhoog"
-                  >↑</button>
-                  <button
-                    className="bp-btn-ghost bp-btn-icon"
-                    onClick={() => verschuif(z, 'omlaag')}
-                    disabled={idx === zaaksoorten.length - 1}
-                    title="Omlaag"
-                  >↓</button>
-                  <span className="bp-muted" style={{ minWidth: 24, textAlign: 'center', fontSize: 'var(--text-sm)' }}>{z.volgorde}</span>
-                </div>
+                <span className="bp-drag-handle" title="Slepen om te herordenen">⠿</span>
               </td>
               <td>{z.icoon && <span style={{ marginRight: 6 }}>{z.icoon}</span>}<strong>{z.naam}</strong><br /><span className="bp-muted">{z.omschrijving}</span></td>
               <td>{z.behandeling && <span className="bp-tag">{z.behandeling}</span>}</td>
