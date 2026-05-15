@@ -10,18 +10,26 @@ export function Layout() {
   const navigate = useNavigate();
   const [domeinen, setDomeinen] = useState<Domein[]>([]);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     getDomeinen().then(setDomeinen).catch(() => {});
   }, []);
 
   const handleLogout = () => { logout(); navigate('/login'); };
+  const closeSidebar = () => setSidebarOpen(false);
 
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <div className="sidebar-logo">Valoris</div>
-        <nav className="sidebar-nav">
+      {/* Mobiel: overlay om sidebar te sluiten */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar} />}
+
+      <aside className={`sidebar${sidebarOpen ? ' sidebar-open' : ''}`}>
+        <div className="sidebar-logo">
+          Valoris
+          <button className="sidebar-close-btn" onClick={closeSidebar} aria-label="Sluit menu">✕</button>
+        </div>
+        <nav className="sidebar-nav" onClick={closeSidebar}>
           {domeinen.map(d => (
             <NavLink key={d.id} to={`/strategie/${d.id}`} className={({ isActive }) => `sidebar-domein-link${isActive ? ' active' : ''}`}>
               {d.naam}
@@ -29,19 +37,25 @@ export function Layout() {
           ))}
         </nav>
         {hasRole('beheerder') && (
-          <div className="sidebar-beheer">
+          <div className="sidebar-beheer" onClick={closeSidebar}>
             <NavLink to="/beheer" className={({ isActive }) => isActive ? 'active' : ''}>⚙ Beheer</NavLink>
           </div>
         )}
         <div className="sidebar-footer">
-          <button className="sidebar-help-btn" onClick={() => setHelpOpen(true)}>? Help</button>
+          <button className="sidebar-help-btn" onClick={() => { setHelpOpen(true); closeSidebar(); }}>? Help</button>
           <span className="sidebar-user">{user?.naam}</span>
           <button className="btn-secondary" onClick={handleLogout}>Uitloggen</button>
         </div>
       </aside>
+
       <main className="main-content">
+        {/* Mobiel: hamburger knop bovenin */}
+        <button className="hamburger-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+          ☰ Menu
+        </button>
         <Outlet />
       </main>
+
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
     </div>
   );

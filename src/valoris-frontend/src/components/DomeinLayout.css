@@ -83,3 +83,54 @@
   height: calc(100vh - var(--header-height));
   overflow-y: auto;
 }
+
+/* ── Tablet ── */
+@media (max-width: 1024px) {
+  .domein-header {
+    gap: var(--space-3);
+    padding: 0 var(--space-4);
+  }
+  .domein-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .domein-tabs::-webkit-scrollbar { display: none; }
+}
+
+/* ── Mobiel ── */
+@media (max-width: 768px) {
+  .domein-header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
+  }
+  .domein-header-left {
+    min-width: unset;
+    flex: 1;
+  }
+  .domein-naam { font-size: var(--text-base); }
+  .wissel-btn {
+    margin-left: 0;
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-3);
+  }
+  .domein-tabs {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .domein-tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    white-space: nowrap;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+  .domein-content {
+    height: auto;
+    min-height: calc(100vh - 120px);
+  }
+}

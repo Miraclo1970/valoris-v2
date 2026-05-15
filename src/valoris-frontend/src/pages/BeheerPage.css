@@ -291,3 +291,41 @@
 .bp-row-drag-over td {
   border-top: 2px solid var(--color-primary);
 }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .bp-root {
+    padding: var(--space-4);
+  }
+  .bp-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .bp-tabs::-webkit-scrollbar { display: none; }
+  .bp-tab {
+    white-space: nowrap;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+  .bp-tab-header {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .bp-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .bp-koppel-groepen {
+    grid-template-columns: 1fr;
+  }
+  /* Tabellen horizontaal scrollbaar */
+  .bp-tab-content {
+    overflow-x: auto;
+  }
+  .bp-table {
+    min-width: 500px;
+  }
+  .bp-rol-form {
+    flex-wrap: wrap;
+  }
+}
