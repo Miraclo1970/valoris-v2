@@ -423,36 +423,91 @@ function KoppelenTab() {
   );
 }
 
+// Bereken vaste start- en einddatum op basis van type + keuze
+function berekenDatums(type: string, jaar: number, nr: number): { startdatum: string; einddatum: string } {
+  if (type === 'kwartaal') {
+    const start = new Date(jaar, (nr - 1) * 3, 1);
+    const eind  = new Date(jaar, nr * 3, 0);
+    return { startdatum: start.toISOString().split('T')[0], einddatum: eind.toISOString().split('T')[0] };
+  }
+  if (type === 'maand') {
+    const start = new Date(jaar, nr - 1, 1);
+    const eind  = new Date(jaar, nr, 0);
+    return { startdatum: start.toISOString().split('T')[0], einddatum: eind.toISOString().split('T')[0] };
+  }
+  // jaar
+  return { startdatum: `${jaar}-01-01`, einddatum: `${jaar}-12-31` };
+}
+
+const MAANDNAMEN = ['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+
 function PeriodesTab() {
+  const huidigJaar = new Date().getFullYear();
   const [periodes, setPeriodes] = useState<HuidigePeriode[]>([]);
   const [editing, setEditing] = useState<HuidigePeriode | null>(null);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState<PeriodeCreate>({ startdatum: '', einddatum: '', type: 'kwartaal' });
+  const [type, setType] = useState('kwartaal');
+  const [jaar, setJaar] = useState(huidigJaar);
+  const [nr, setNr] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [genereerJaar, setGenereerJaar] = useState(huidigJaar);
 
   const load = () => getAllePeriodes().then(setPeriodes);
   useEffect(() => { load(); }, []);
 
-  const toInputDate = (iso: string) => iso.split('T')[0];
-  const openAdd = () => { setAdding(true); setEditing(null); setForm({ startdatum: '', einddatum: '', type: 'kwartaal' }); };
-  const openEdit = (p: HuidigePeriode) => { setEditing(p); setAdding(false); setForm({ startdatum: toInputDate(p.startdatum), einddatum: toInputDate(p.einddatum), type: p.type }); };
+  const nrLabel = (t: string, n: number) =>
+    t === 'kwartaal' ? `Q${n}` : t === 'maand' ? MAANDNAMEN[n - 1] : `${n}`;
+
+  const openAdd = () => { setAdding(true); setEditing(null); setType('kwartaal'); setJaar(huidigJaar); setNr(1); };
+  const openEdit = (p: HuidigePeriode) => {
+    setEditing(p); setAdding(false);
+    const d = new Date(p.startdatum);
+    setType(p.type);
+    setJaar(d.getFullYear());
+    setNr(p.type === 'kwartaal' ? Math.ceil((d.getMonth() + 1) / 3)
+        : p.type === 'maand' ? d.getMonth() + 1 : 1);
+  };
   const cancel = () => { setAdding(false); setEditing(null); };
 
   const save = async () => {
     setSaving(true);
     try {
-      if (editing) await updatePeriode(editing.id, form);
-      else await createPeriode(form);
+      const datums = berekenDatums(type, jaar, nr);
+      const body: PeriodeCreate = { type, ...datums };
+      if (editing) await updatePeriode(editing.id, body);
+      else await createPeriode(body);
       await load();
       cancel();
     } finally { setSaving(false); }
   };
 
+  const genereerKwartalen = async () => {
+    setSaving(true);
+    try {
+      for (let q = 1; q <= 4; q++) {
+        const datums = berekenDatums('kwartaal', genereerJaar, q);
+        const bestaat = periodes.some(p => p.startdatum.startsWith(datums.startdatum));
+        if (!bestaat) await createPeriode({ type: 'kwartaal', ...datums });
+      }
+      await load();
+    } finally { setSaving(false); }
+  };
+
+  const { startdatum, einddatum } = berekenDatums(type, jaar, nr);
+
   return (
     <div className="bp-tab-content">
       <div className="bp-tab-header">
         <span className="bp-tab-title">Periodes ({periodes.length})</span>
-        <button className="bp-btn-primary" onClick={openAdd}>+ Nieuw</button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <select className="bp-input bp-input-sm" value={genereerJaar} onChange={e => setGenereerJaar(+e.target.value)}>
+            {[huidigJaar - 1, huidigJaar, huidigJaar + 1, huidigJaar + 2].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <button className="bp-btn-ghost" onClick={genereerKwartalen} disabled={saving} title="Maakt Q1–Q4 aan voor dit jaar (overslaat bestaande)">
+            Genereer kwartalen
+          </button>
+          <button className="bp-btn-primary" onClick={openAdd}>+ Nieuw</button>
+        </div>
       </div>
 
       {(adding || editing) && (
@@ -460,22 +515,37 @@ function PeriodesTab() {
           <h3 className="bp-form-title">{editing ? 'Periode bewerken' : 'Nieuwe periode'}</h3>
           <div className="bp-form-grid">
             <label>Type
-              <select className="bp-input" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+              <select className="bp-input" value={type} onChange={e => { setType(e.target.value); setNr(1); }}>
                 <option value="maand">Maand</option>
                 <option value="kwartaal">Kwartaal</option>
                 <option value="jaar">Jaar</option>
               </select>
             </label>
-            <label>Startdatum
-              <input className="bp-input" type="date" value={form.startdatum} onChange={e => setForm(f => ({ ...f, startdatum: e.target.value }))} />
+            <label>Jaar
+              <input className="bp-input" type="number" value={jaar} min={2020} max={2040}
+                onChange={e => setJaar(+e.target.value)} />
             </label>
-            <label>Einddatum
-              <input className="bp-input" type="date" value={form.einddatum} onChange={e => setForm(f => ({ ...f, einddatum: e.target.value }))} />
-            </label>
+            {type === 'kwartaal' && (
+              <label>Kwartaal
+                <select className="bp-input" value={nr} onChange={e => setNr(+e.target.value)}>
+                  {[1,2,3,4].map(q => <option key={q} value={q}>Q{q}</option>)}
+                </select>
+              </label>
+            )}
+            {type === 'maand' && (
+              <label>Maand
+                <select className="bp-input" value={nr} onChange={e => setNr(+e.target.value)}>
+                  {MAANDNAMEN.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
+                </select>
+              </label>
+            )}
           </div>
+          <p className="bp-muted" style={{ fontSize: 'var(--text-xs)', marginTop: 4 }}>
+            {nrLabel(type, nr)} {jaar} → {startdatum} t/m {einddatum}
+          </p>
           <div className="bp-form-actions">
             <button className="bp-btn-ghost" onClick={cancel}>Annuleren</button>
-            <button className="bp-btn-primary" onClick={save} disabled={saving || !form.startdatum || !form.einddatum}>
+            <button className="bp-btn-primary" onClick={save} disabled={saving}>
               {saving ? 'Opslaan…' : 'Opslaan'}
             </button>
           </div>
