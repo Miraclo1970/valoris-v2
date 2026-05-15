@@ -70,6 +70,26 @@ public class AuthController : ControllerBase
             token = tokenStr,
         });
     }
+
+    [HttpPut("wachtwoord")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    public async Task<IActionResult> WijzigEigenWachtwoord([FromBody] EigenWachtwoordWijzig body)
+    {
+        var gebruikerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var gebruiker = await _db.Gebruikers.FindAsync(gebruikerId);
+        if (gebruiker is null) return NotFound();
+
+        if (!PasswordHasher.Verify(body.HuidigWachtwoord, gebruiker.WachtwoordHash))
+            return BadRequest(new { fout = "Huidig wachtwoord is onjuist." });
+
+        if (body.NieuwWachtwoord.Length < 8)
+            return BadRequest(new { fout = "Nieuw wachtwoord moet minimaal 8 tekens bevatten." });
+
+        gebruiker.WachtwoordHash = PasswordHasher.Hash(body.NieuwWachtwoord);
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
 }
 
 public record LoginRequest(string Email, string Wachtwoord);
+public record EigenWachtwoordWijzig(string HuidigWachtwoord, string NieuwWachtwoord);

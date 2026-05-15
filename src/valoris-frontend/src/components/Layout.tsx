@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { getDomeinen, type Domein } from '../api/client';
 import { useEffect, useState } from 'react';
 import { HelpModal } from './HelpModal';
+import { WachtwoordModal } from './WachtwoordModal';
 import './Layout.css';
 
 export function Layout() {
@@ -10,6 +11,7 @@ export function Layout() {
   const navigate = useNavigate();
   const [domeinen, setDomeinen] = useState<Domein[]>([]);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [wachtwoordOpen, setWachtwoordOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function Layout() {
         )}
         <div className="sidebar-footer">
           <button className="sidebar-help-btn" onClick={() => { setHelpOpen(true); closeSidebar(); }}>? Help</button>
+          <button className="sidebar-help-btn" onClick={() => { setWachtwoordOpen(true); closeSidebar(); }}>🔑 Wachtwoord</button>
           <span className="sidebar-user">{user?.naam}</span>
           <button className="btn-secondary" onClick={handleLogout}>Uitloggen</button>
         </div>
@@ -57,6 +60,7 @@ export function Layout() {
       </main>
 
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
+      {wachtwoordOpen && <WachtwoordModal onClose={() => setWachtwoordOpen(false)} />}
     </div>
   );
 }

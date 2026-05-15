@@ -89,6 +89,7 @@ export const login = (email: string, wachtwoord: string) =>
 export const getGebruikers = () => request<GebruikerDetail[]>('/gebruikers');
 export const createGebruiker = (body: GebruikerCreate) => request<number>('/gebruikers', { method: 'POST', body: JSON.stringify(body) });
 export const wijzigWachtwoord = (id: number, nieuwWachtwoord: string) => request<void>(`/gebruikers/${id}/wachtwoord`, { method: 'PUT', body: JSON.stringify({ nieuwWachtwoord }) });
+export const wijzigEigenWachtwoord = (huidigWachtwoord: string, nieuwWachtwoord: string) => request<void>('/auth/wachtwoord', { method: 'PUT', body: JSON.stringify({ huidigWachtwoord, nieuwWachtwoord }) });
 export const koppelRol = (id: number, domeinId: number, rol: string) => request<void>(`/gebruikers/${id}/rollen`, { method: 'POST', body: JSON.stringify({ domeinId, rol }) });
 export const ontkoppelRol = (id: number, rolId: number) => request<void>(`/gebruikers/${id}/rollen/${rolId}`, { method: 'DELETE' });
 
