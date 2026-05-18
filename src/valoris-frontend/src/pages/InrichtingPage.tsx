@@ -136,8 +136,12 @@ export function InrichtingPage() {
     }).length;
 
   const slaMetingOp = async (doelId: number, waardeStr: string) => {
-    const waarde = parseFloat(waardeStr);
-    if (isNaN(waarde) || !huidigePeriode) { setMetingInput(null); return; }
+    const waarde = parseFloat(waardeStr.replace(',', '.'));
+    if (isNaN(waarde)) { setFout('Voer een geldige waarde in.'); return; }
+    if (!huidigePeriode) {
+      setFout(`Geen ${periodeType} gevonden. Maak eerst periodes aan via Beheer → Periodes.`);
+      return;
+    }
     const bron = metingInput?.bron ?? 'Handmatig';
     setSaving(true); setFout(null);
     try {
@@ -512,7 +516,9 @@ export function InrichtingPage() {
                         </div>
                       </div>
                     ) : !meting ? (
-                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting invoeren</button>
+                      huidigePeriode
+                        ? <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting invoeren</button>
+                        : <span className="ip-geen-periode-hint">Geen periode — maak kwartalen/maanden aan via Beheer</span>
                     ) : null}
                   </div>
                 );
@@ -627,7 +633,9 @@ export function InrichtingPage() {
                         </div>
                       </div>
                     ) : !meting ? (
-                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting</button>
+                      huidigePeriode
+                        ? <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting</button>
+                        : <span className="ip-geen-periode-hint">Geen periode</span>
                     ) : null}
                   </div>
                 );

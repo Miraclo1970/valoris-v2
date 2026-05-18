@@ -439,6 +439,12 @@
   padding: 0;
 }
 
+.ip-geen-periode-hint {
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+  font-style: italic;
+}
+
 .ip-meting-form {
   margin-top: var(--space-2);
   display: flex;
