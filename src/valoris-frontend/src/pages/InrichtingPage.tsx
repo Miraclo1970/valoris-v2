@@ -483,27 +483,36 @@ export function InrichtingPage() {
                       </div>
                     )}
                     {editingThis ? (
-                      <div className="ip-meting-form">
-                        <input
-                          className="ip-meting-input"
-                          autoFocus
-                          value={metingInput?.waarde ?? ''}
-                          placeholder={`waarde in ${ind.eenheid ?? ''}`}
-                          onChange={e => setMetingInput(m => m ? { ...m, waarde: e.target.value } : null)}
-                          onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, metingInput?.waarde ?? ''); if (e.key === 'Escape') setMetingInput(null); }}
-                        />
-                        <select
-                          className="ip-bron-select"
-                          value={metingInput?.bron ?? 'Handmatig'}
-                          onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
-                        >
-                          {BRONNEN.map(b => <option key={b}>{b}</option>)}
-                        </select>
-                        <button className="ip-meting-opslaan-btn" onClick={() => slaMetingOp(md.id, metingInput?.waarde ?? '')} title="Opslaan">✓</button>
-                        <button className="ip-meting-annuleer-btn" onClick={() => setMetingInput(null)} title="Annuleren">✕</button>
+                      <div className="ip-meting-blok">
+                        <div className="ip-meting-rij">
+                          <label className="ip-meting-label">Waarde ({ind.eenheid ?? '—'})</label>
+                          <input
+                            className="ip-meting-input"
+                            autoFocus
+                            type="number"
+                            value={metingInput?.waarde ?? ''}
+                            placeholder="0"
+                            onChange={e => setMetingInput(m => m ? { ...m, waarde: e.target.value } : null)}
+                            onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, metingInput?.waarde ?? ''); if (e.key === 'Escape') setMetingInput(null); }}
+                          />
+                        </div>
+                        <div className="ip-meting-rij">
+                          <label className="ip-meting-label">Bron</label>
+                          <select
+                            className="ip-bron-select"
+                            value={metingInput?.bron ?? 'Handmatig'}
+                            onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
+                          >
+                            {BRONNEN.map(b => <option key={b}>{b}</option>)}
+                          </select>
+                        </div>
+                        <div className="ip-meting-acties">
+                          <button className="ip-meting-annuleer-btn" onClick={() => setMetingInput(null)}>Annuleren</button>
+                          <button className="ip-meting-opslaan-btn" onClick={() => slaMetingOp(md.id, metingInput?.waarde ?? '')}>Opslaan</button>
+                        </div>
                       </div>
                     ) : !meting ? (
-                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting toevoegen</button>
+                      <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting invoeren</button>
                     ) : null}
                   </div>
                 );
@@ -589,24 +598,33 @@ export function InrichtingPage() {
                       </>
                     )}
                     {editingThis ? (
-                      <div className="ip-meting-form">
-                        <input
-                          className="ip-meting-input"
-                          autoFocus
-                          value={metingInput?.waarde ?? ''}
-                          placeholder={ind.eenheid ?? 'waarde'}
-                          onChange={e => setMetingInput(m => m ? { ...m, waarde: e.target.value } : null)}
-                          onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, metingInput?.waarde ?? ''); if (e.key === 'Escape') setMetingInput(null); }}
-                        />
-                        <select
-                          className="ip-bron-select"
-                          value={metingInput?.bron ?? 'Handmatig'}
-                          onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
-                        >
-                          {BRONNEN.map(b => <option key={b}>{b}</option>)}
-                        </select>
-                        <button className="ip-meting-opslaan-btn" onClick={() => slaMetingOp(md.id, metingInput?.waarde ?? '')} title="Opslaan">✓</button>
-                        <button className="ip-meting-annuleer-btn" onClick={() => setMetingInput(null)} title="Annuleren">✕</button>
+                      <div className="ip-meting-blok">
+                        <div className="ip-meting-rij">
+                          <label className="ip-meting-label">Waarde ({ind.eenheid ?? '—'})</label>
+                          <input
+                            className="ip-meting-input"
+                            autoFocus
+                            type="number"
+                            value={metingInput?.waarde ?? ''}
+                            placeholder="0"
+                            onChange={e => setMetingInput(m => m ? { ...m, waarde: e.target.value } : null)}
+                            onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, metingInput?.waarde ?? ''); if (e.key === 'Escape') setMetingInput(null); }}
+                          />
+                        </div>
+                        <div className="ip-meting-rij">
+                          <label className="ip-meting-label">Bron</label>
+                          <select
+                            className="ip-bron-select"
+                            value={metingInput?.bron ?? 'Handmatig'}
+                            onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
+                          >
+                            {BRONNEN.map(b => <option key={b}>{b}</option>)}
+                          </select>
+                        </div>
+                        <div className="ip-meting-acties">
+                          <button className="ip-meting-annuleer-btn" onClick={() => setMetingInput(null)}>Annuleren</button>
+                          <button className="ip-meting-opslaan-btn" onClick={() => slaMetingOp(md.id, metingInput?.waarde ?? '')}>Opslaan</button>
+                        </div>
                       </div>
                     ) : !meting ? (
                       <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting</button>
