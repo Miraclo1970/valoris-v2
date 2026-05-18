@@ -69,7 +69,7 @@ export function HelpModal({ onClose }: Props) {
         <section>
           <h2>Strategie <span className="help-rol help-rol-green">alle rollen</span></h2>
           <ul>
-            <li>Selecteer maximaal 3 zaaksoorten via de chips bovenaan.</li>
+            <li>Selecteer zaaksoorten via de chips bovenaan.</li>
             <li>De matrix toont <strong>●</strong> IST · <strong>○</strong> SOLL · <strong>→</strong> verwachte verandering.</li>
             <li><strong>Y-as</strong> = prestatie · <strong>X-as</strong> = inrichting.</li>
             <li>Verander de periode rechtsboven voor historische data.</li>

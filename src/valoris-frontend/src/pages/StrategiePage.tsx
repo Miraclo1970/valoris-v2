@@ -4,7 +4,6 @@ import { getStrategie, getPeriodes, type Strategie, type HuidigePeriode } from '
 import { MatrixChart } from '../components/MatrixChart';
 import './StrategiePage.css';
 
-const MAX_SELECTIE = 3;
 
 function formatPeriode(p: HuidigePeriode): string {
   const start = new Date(p.startdatum);
@@ -40,7 +39,7 @@ export function StrategiePage() {
     getStrategie(id, selectedPeriodeId)
       .then(s => {
         setStrategie(s);
-        setSelectedIds(s.zaaksoorten.slice(0, MAX_SELECTIE).map(z => z.zaaksoortId));
+        setSelectedIds(s.zaaksoorten.map(z => z.zaaksoortId));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -72,11 +71,9 @@ export function StrategiePage() {
   }
 
   const toggleSelectie = (zaaksoortId: number) => {
-    setSelectedIds(prev => {
-      if (prev.includes(zaaksoortId)) return prev.filter(id => id !== zaaksoortId);
-      if (prev.length >= MAX_SELECTIE) return prev;
-      return [...prev, zaaksoortId];
-    });
+    setSelectedIds(prev =>
+      prev.includes(zaaksoortId) ? prev.filter(id => id !== zaaksoortId) : [...prev, zaaksoortId]
+    );
   };
 
   const selected = strategie.zaaksoorten.filter(z => selectedIds.includes(z.zaaksoortId));
@@ -105,7 +102,7 @@ export function StrategiePage() {
       {/* Klantreis selector strip */}
       <div className="sp-selector-wrap">
         <div className="sp-selector-header">
-          <span className="sp-section-label">ZAAKSOORTEN — SELECTEER MAX. {MAX_SELECTIE}</span>
+          <span className="sp-section-label">ZAAKSOORTEN</span>
           <div className="sp-selector-right">
             {periodes.length > 0 && (
               <select
@@ -119,18 +116,17 @@ export function StrategiePage() {
                 ))}
               </select>
             )}
-            <span className="sp-selector-count">{selectedIds.length} van {MAX_SELECTIE} geselecteerd</span>
+            <span className="sp-selector-count">{selectedIds.length} geselecteerd</span>
           </div>
         </div>
         <div className="sp-selector-strip">
           {strategie.zaaksoorten.map((z, i) => {
             const isSelected = selectedIds.includes(z.zaaksoortId);
-            const disabled = !isSelected && selectedIds.length >= MAX_SELECTIE;
             return (
               <div key={z.zaaksoortId} className="sp-zaak-wrap">
                 <div
-                  className={`sp-zaak-chip ${isSelected ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
-                  onClick={() => !disabled && toggleSelectie(z.zaaksoortId)}
+                  className={`sp-zaak-chip ${isSelected ? 'selected' : ''}`}
+                  onClick={() => toggleSelectie(z.zaaksoortId)}
                 >
                   <input
                     type="checkbox"
