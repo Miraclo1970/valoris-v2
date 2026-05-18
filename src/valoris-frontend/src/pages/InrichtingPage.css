@@ -620,8 +620,7 @@
 }
 
 .ip-ind-card.ip-card-editing {
-  grid-column: 1 / -1;
-  max-width: 420px;
+  grid-column: span 2;
 }
 
 .ip-ind-card {
