@@ -133,7 +133,6 @@ export function StrategiePage() {
                     className="sp-zaak-check"
                     checked={isSelected}
                     readOnly
-                    disabled={disabled}
                   />
                   {z.icoon && <span className="sp-zaak-icoon">{z.icoon}</span>}
                   <span className="sp-zaak-naam">{z.zaaksoortNaam}</span>
