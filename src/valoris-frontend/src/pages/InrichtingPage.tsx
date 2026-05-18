@@ -57,7 +57,7 @@ export function InrichtingPage() {
   const [periodeType, setPeriodeType] = useState<PeriodeType>('kwartaal');
   const [periodeIdx, setPeriodeIdx] = useState(0);
 
-  const [metingInput, setMetingInput] = useState<{ doelId: number; waarde: string; bron: string } | null>(null);
+  const [metingInput, setMetingInput] = useState<{ doelId: number; waarde: string; bron: string; naam: string; eenheid: string } | null>(null);
   const [nieuwDoelModal, setNieuwDoelModal] = useState<'prestatie' | 'inrichting' | null>(null);
   const [doelForm, setDoelForm] = useState<MetingsdoelCreate>({ domeinIndicatorId: 0, zaaksoortId: 0, normWaarde: 0, normRichting: 'hogerisbeter', gewicht: 1 });
   const [bewerkDoel, setBewerkDoel] = useState<Metingsdoel | null>(null);
@@ -454,7 +454,6 @@ export function InrichtingPage() {
                 /* ── Staat 2 & 3: Relevant / Gemeten ── */
                 const meting = metingVoorDoel(md.id);
                 const delta = trend(md.id);
-                const editingThis = metingInput?.doelId === md.id;
                 const sl = meting ? stoplicht(meting.waarde, md.normWaarde, md.normRichting) : null;
                 const itemClass = sl ? `ip-ind-item sl-${sl}` : 'ip-ind-item relevant';
                 const dotClass = sl ? `ip-dot sl-dot-${sl}` : 'ip-dot ip-dot-relevant';
@@ -471,7 +470,7 @@ export function InrichtingPage() {
                     <div className="ip-ind-meta">
                       Norm: {normLabel(md)} · Gewicht: {md.gewicht}
                     </div>
-                    {meting && !editingThis && (
+                    {meting && (
                       <div className="ip-ind-waarde-row">
                         <span className="ip-ist-waarde">{meting.waarde} {ind.eenheid}</span>
                         {delta !== null && (
@@ -483,43 +482,14 @@ export function InrichtingPage() {
                           ? <span className="ip-gevalideerd-badge" title="Gevalideerd">✓ gevalideerd</span>
                           : <button className="ip-valideer-btn" onClick={() => valideerMeting(md.id)} title="Meting valideren">✓</button>
                         }
-                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde), bron: meting.bron })}>bewerken</button>
+                        <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde), bron: meting.bron, naam: ind.indicatorNaam, eenheid: ind.eenheid ?? '' })}>bewerken</button>
                       </div>
                     )}
-                    {editingThis ? (
-                      <div className="ip-meting-blok">
-                        <div className="ip-meting-rij">
-                          <label className="ip-meting-label">Waarde ({ind.eenheid ?? '—'})</label>
-                          <input
-                            className="ip-meting-input"
-                            autoFocus
-                            type="number"
-                            value={metingInput?.waarde ?? ''}
-                            placeholder="0"
-                            onChange={e => setMetingInput(m => m ? { ...m, waarde: e.target.value } : null)}
-                            onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, metingInput?.waarde ?? ''); if (e.key === 'Escape') setMetingInput(null); }}
-                          />
-                        </div>
-                        <div className="ip-meting-rij">
-                          <label className="ip-meting-label">Bron</label>
-                          <select
-                            className="ip-bron-select"
-                            value={metingInput?.bron ?? 'Handmatig'}
-                            onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
-                          >
-                            {BRONNEN.map(b => <option key={b}>{b}</option>)}
-                          </select>
-                        </div>
-                        <div className="ip-meting-acties">
-                          <button className="ip-meting-annuleer-btn" onClick={() => setMetingInput(null)}>Annuleren</button>
-                          <button className="ip-meting-opslaan-btn" onClick={() => slaMetingOp(md.id, metingInput?.waarde ?? '')}>Opslaan</button>
-                        </div>
-                      </div>
-                    ) : !meting ? (
+                    {!meting && (
                       huidigePeriode
-                        ? <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting invoeren</button>
+                        ? <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig', naam: ind.indicatorNaam, eenheid: ind.eenheid ?? '' })}>+ meting invoeren</button>
                         : <span className="ip-geen-periode-hint">Geen periode — maak kwartalen/maanden aan via Beheer</span>
-                    ) : null}
+                    )}
                   </div>
                 );
               })}
@@ -575,9 +545,8 @@ export function InrichtingPage() {
 
                 /* ── Staat 2 & 3: Relevant / Gemeten ── */
                 const meting = metingVoorDoel(md.id);
-                const editingThis = metingInput?.doelId === md.id;
                 const sl = meting ? stoplicht(meting.waarde, md.normWaarde, md.normRichting) : null;
-                const cardClass = `${sl ? `ip-ind-card sl-${sl}` : 'ip-ind-card relevant'}${editingThis ? ' ip-card-editing' : ''}`;
+                const cardClass = sl ? `ip-ind-card sl-${sl}` : 'ip-ind-card relevant';
                 const dotClass = sl ? `ip-dot sl-dot-${sl}` : 'ip-dot ip-dot-relevant';
 
                 return (
@@ -591,7 +560,7 @@ export function InrichtingPage() {
                       </div>
                     </div>
                     <div className="ip-ind-meta">Norm: {normLabel(md)}</div>
-                    {meting && !editingThis && (
+                    {meting && (
                       <>
                         <div className={`ip-card-waarde ${sl ? `sl-waarde-${sl}` : ''}`}>{meting.waarde}{ind.eenheid}</div>
                         <div className="ip-card-acties">
@@ -599,44 +568,15 @@ export function InrichtingPage() {
                             ? <span className="ip-gevalideerd-badge" title="Gevalideerd">✓</span>
                             : <button className="ip-valideer-btn" onClick={() => valideerMeting(md.id)} title="Meting valideren">✓</button>
                           }
-                          <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde), bron: meting.bron })}>bewerken</button>
+                          <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: String(meting.waarde), bron: meting.bron, naam: ind.indicatorNaam, eenheid: ind.eenheid ?? '' })}>bewerken</button>
                         </div>
                       </>
                     )}
-                    {editingThis ? (
-                      <div className="ip-meting-blok">
-                        <div className="ip-meting-rij">
-                          <label className="ip-meting-label">Waarde ({ind.eenheid ?? '—'})</label>
-                          <input
-                            className="ip-meting-input"
-                            autoFocus
-                            type="number"
-                            value={metingInput?.waarde ?? ''}
-                            placeholder="0"
-                            onChange={e => setMetingInput(m => m ? { ...m, waarde: e.target.value } : null)}
-                            onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(md.id, metingInput?.waarde ?? ''); if (e.key === 'Escape') setMetingInput(null); }}
-                          />
-                        </div>
-                        <div className="ip-meting-rij">
-                          <label className="ip-meting-label">Bron</label>
-                          <select
-                            className="ip-bron-select"
-                            value={metingInput?.bron ?? 'Handmatig'}
-                            onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
-                          >
-                            {BRONNEN.map(b => <option key={b}>{b}</option>)}
-                          </select>
-                        </div>
-                        <div className="ip-meting-acties">
-                          <button className="ip-meting-annuleer-btn" onClick={() => setMetingInput(null)}>Annuleren</button>
-                          <button className="ip-meting-opslaan-btn" onClick={() => slaMetingOp(md.id, metingInput?.waarde ?? '')}>Opslaan</button>
-                        </div>
-                      </div>
-                    ) : !meting ? (
+                    {!meting && (
                       huidigePeriode
-                        ? <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig' })}>+ meting</button>
+                        ? <button className="ip-meting-link" onClick={() => setMetingInput({ doelId: md.id, waarde: '', bron: 'Handmatig', naam: ind.indicatorNaam, eenheid: ind.eenheid ?? '' })}>+ meting</button>
                         : <span className="ip-geen-periode-hint">Geen periode</span>
-                    ) : null}
+                    )}
                   </div>
                 );
               })}
@@ -723,6 +663,55 @@ export function InrichtingPage() {
           </Modal>
         );
       })()}
+
+      {/* Modal: meting invoeren / bewerken */}
+      {metingInput && (
+        <Modal
+          title={`Meting — ${metingInput.naam}${metingInput.eenheid ? ` (${metingInput.eenheid})` : ''}`}
+          onClose={() => setMetingInput(null)}
+          footer={
+            <>
+              <button className="btn-secondary" onClick={() => setMetingInput(null)} disabled={saving}>Annuleren</button>
+              <button
+                className="btn-primary"
+                onClick={() => slaMetingOp(metingInput.doelId, metingInput.waarde)}
+                disabled={saving || !metingInput.waarde}
+              >
+                {saving ? 'Bezig…' : 'Opslaan'}
+              </button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <div className="form-row">
+              <label>Waarde{metingInput.eenheid ? ` (${metingInput.eenheid})` : ''}</label>
+              <input
+                type="number"
+                autoFocus
+                value={metingInput.waarde}
+                onChange={e => setMetingInput(m => m ? { ...m, waarde: e.target.value } : null)}
+                onKeyDown={e => { if (e.key === 'Enter') slaMetingOp(metingInput.doelId, metingInput.waarde); }}
+                placeholder="0"
+                step="any"
+              />
+            </div>
+            <div className="form-row">
+              <label>Bron</label>
+              <select
+                value={metingInput.bron}
+                onChange={e => setMetingInput(m => m ? { ...m, bron: e.target.value } : null)}
+              >
+                {BRONNEN.map(b => <option key={b}>{b}</option>)}
+              </select>
+            </div>
+            {fout && (
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-danger)', background: 'var(--color-danger-light)', padding: '6px 10px', borderRadius: 4 }}>
+                {fout}
+              </p>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {/* Modal: nieuw metingsdoel */}
       {nieuwDoelModal && (
