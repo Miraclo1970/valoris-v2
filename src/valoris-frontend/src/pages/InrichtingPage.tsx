@@ -577,7 +577,7 @@ export function InrichtingPage() {
                 const meting = metingVoorDoel(md.id);
                 const editingThis = metingInput?.doelId === md.id;
                 const sl = meting ? stoplicht(meting.waarde, md.normWaarde, md.normRichting) : null;
-                const cardClass = sl ? `ip-ind-card sl-${sl}` : 'ip-ind-card relevant';
+                const cardClass = `${sl ? `ip-ind-card sl-${sl}` : 'ip-ind-card relevant'}${editingThis ? ' ip-card-editing' : ''}`;
                 const dotClass = sl ? `ip-dot sl-dot-${sl}` : 'ip-dot ip-dot-relevant';
 
                 return (
