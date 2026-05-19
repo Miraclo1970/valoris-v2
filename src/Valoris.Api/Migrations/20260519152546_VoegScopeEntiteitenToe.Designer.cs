@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Valoris.Api.Data;
 
@@ -11,9 +12,11 @@ using Valoris.Api.Data;
 namespace Valoris.Api.Migrations
 {
     [DbContext(typeof(ValorisDbContext))]
-    partial class ValorisDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519152546_VoegScopeEntiteitenToe")]
+    partial class VoegScopeEntiteitenToe
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

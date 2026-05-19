@@ -19,6 +19,9 @@ public class ValorisDbContext : DbContext
     public DbSet<Meting> Metingen => Set<Meting>();
     public DbSet<Verandering> Veranderingen => Set<Verandering>();
     public DbSet<Veranderimpact> Veranderimpacten => Set<Veranderimpact>();
+    public DbSet<Product> Producten => Set<Product>();
+    public DbSet<Proces> Processen => Set<Proces>();
+    public DbSet<ZaaksoortScope> ZaaksoortScopes => Set<ZaaksoortScope>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -110,6 +113,54 @@ public class ValorisDbContext : DbContext
             .HasForeignKey(vi => vi.PeriodeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Product FK
+        modelBuilder.Entity<Product>()
+            .HasOne(p => p.Domein)
+            .WithMany(d => d.Producten)
+            .HasForeignKey(p => p.DomeinId);
+
+        // Proces FK
+        modelBuilder.Entity<Proces>()
+            .HasOne(p => p.Domein)
+            .WithMany(d => d.Processen)
+            .HasForeignKey(p => p.DomeinId);
+
+        // Zaaksoort.Hoofdproces FK (optional, no cascade — avoid multiple cascade paths)
+        modelBuilder.Entity<Zaaksoort>()
+            .HasOne(z => z.Hoofdproces)
+            .WithMany(p => p.HoofdZaaksoorten)
+            .HasForeignKey(z => z.HoofdprocesId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ZaaksoortScope FK's
+        modelBuilder.Entity<ZaaksoortScope>()
+            .HasOne(s => s.Domein)
+            .WithMany(d => d.ZaaksoortScopes)
+            .HasForeignKey(s => s.DomeinId);
+
+        modelBuilder.Entity<ZaaksoortScope>()
+            .HasOne(s => s.Zaaksoort)
+            .WithMany(z => z.Scopes)
+            .HasForeignKey(s => s.ZaaksoortId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ZaaksoortScope>()
+            .HasOne(s => s.Product)
+            .WithMany(p => p.ZaaksoortScopes)
+            .HasForeignKey(s => s.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ZaaksoortScope>()
+            .HasOne(s => s.Proces)
+            .WithMany(p => p.ZaaksoortScopes)
+            .HasForeignKey(s => s.ProcesId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ZaaksoortScope unique: per domein mag product×proces slechts aan één zaaksoort gekoppeld zijn
+        modelBuilder.Entity<ZaaksoortScope>()
+            .HasIndex(s => new { s.DomeinId, s.ProductId, s.ProcesId })
+            .IsUnique();
+
         // Decimal precision (18, 4) for all decimal columns
         modelBuilder.Entity<Domein>()
             .Property(d => d.Interventiedrempel).HasPrecision(18, 4);
@@ -127,5 +178,8 @@ public class ValorisDbContext : DbContext
 
         modelBuilder.Entity<Veranderimpact>()
             .Property(vi => vi.Waarde).HasPrecision(18, 4);
+
+        modelBuilder.Entity<ZaaksoortScope>()
+            .Property(s => s.Frequentie).HasPrecision(18, 4);
     }
 }

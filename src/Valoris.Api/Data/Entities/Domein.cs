@@ -13,4 +13,7 @@ public class Domein
     public ICollection<DomeinIndicator> DomeinIndicatoren { get; set; } = new List<DomeinIndicator>();
     public ICollection<Verandering> Veranderingen { get; set; } = new List<Verandering>();
     public ICollection<GebruikerDomeinRol> GebruikerDomeinRollen { get; set; } = new List<GebruikerDomeinRol>();
+    public ICollection<Product> Producten { get; set; } = new List<Product>();
+    public ICollection<Proces> Processen { get; set; } = new List<Proces>();
+    public ICollection<ZaaksoortScope> ZaaksoortScopes { get; set; } = new List<ZaaksoortScope>();
 }

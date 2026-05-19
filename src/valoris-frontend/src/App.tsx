@@ -6,6 +6,7 @@ import { DomeinLayout } from './components/DomeinLayout';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { InrichtingPage } from './pages/InrichtingPage';
+import { ScopePage } from './pages/ScopePage';
 import { VeranderingenPage } from './pages/VeranderingenPage';
 import { StrategiePage } from './pages/StrategiePage';
 import { BeheerPage } from './pages/BeheerPage';
@@ -38,6 +39,9 @@ export default function App() {
             } />
             <Route path="/inrichting/:domeinId" element={
               <RequireAuth rol="beheerder"><InrichtingPage /></RequireAuth>
+            } />
+            <Route path="/scope/:domeinId" element={
+              <RequireAuth rol="beheerder"><ScopePage /></RequireAuth>
             } />
           </Route>
         </Routes>

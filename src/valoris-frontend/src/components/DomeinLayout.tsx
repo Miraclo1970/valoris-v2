@@ -24,6 +24,11 @@ export function DomeinLayout() {
         </div>
         <nav className="domein-tabs">
           {hasRole('beheerder', id) && (
+            <NavLink to={`/scope/${id}`} className={({ isActive }) => isActive ? 'tab active' : 'tab'}>
+              Scope
+            </NavLink>
+          )}
+          {hasRole('beheerder', id) && (
             <NavLink to={`/inrichting/${id}`} className={({ isActive }) => isActive ? 'tab active' : 'tab'}>
               Inrichting
             </NavLink>

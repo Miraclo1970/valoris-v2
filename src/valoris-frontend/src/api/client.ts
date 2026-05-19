@@ -93,6 +93,23 @@ export const wijzigEigenWachtwoord = (huidigWachtwoord: string, nieuwWachtwoord:
 export const koppelRol = (id: number, domeinId: number, rol: string) => request<void>(`/gebruikers/${id}/rollen`, { method: 'POST', body: JSON.stringify({ domeinId, rol }) });
 export const ontkoppelRol = (id: number, rolId: number) => request<void>(`/gebruikers/${id}/rollen/${rolId}`, { method: 'DELETE' });
 
+// --- Producten ---
+export const getProducten = (domeinId: number) => request<Product[]>(`/domeinen/${domeinId}/producten`);
+export const createProduct = (domeinId: number, body: ProductCreate) => request<number>(`/domeinen/${domeinId}/producten`, { method: 'POST', body: JSON.stringify(body) });
+export const updateProduct = (domeinId: number, id: number, body: Partial<ProductCreate> & { actief?: boolean }) => request<void>(`/domeinen/${domeinId}/producten/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+
+// --- Processen ---
+export const getProcessen = (domeinId: number) => request<Proces[]>(`/domeinen/${domeinId}/processen`);
+export const createProces = (domeinId: number, body: ProcesCreate) => request<number>(`/domeinen/${domeinId}/processen`, { method: 'POST', body: JSON.stringify(body) });
+export const updateProces = (domeinId: number, id: number, body: Partial<ProcesCreate> & { actief?: boolean }) => request<void>(`/domeinen/${domeinId}/processen/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+
+// --- Scope ---
+export const getScopeMatrix = (domeinId: number) => request<ScopeMatrix>(`/domeinen/${domeinId}/scope`);
+export const createScope = (domeinId: number, body: ScopeCreate) => request<number>(`/domeinen/${domeinId}/scope/scopes`, { method: 'POST', body: JSON.stringify(body) });
+export const updateScope = (domeinId: number, id: number, body: ScopeUpdate) => request<void>(`/domeinen/${domeinId}/scope/scopes/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+export const deleteScope = (domeinId: number, id: number) => request<void>(`/domeinen/${domeinId}/scope/scopes/${id}`, { method: 'DELETE' });
+export const setHoofdproces = (domeinId: number, zaaksoortId: number, hoofdprocesId: number | null) => request<void>(`/domeinen/${domeinId}/scope/zaaksoorten/${zaaksoortId}/hoofdproces`, { method: 'PUT', body: JSON.stringify({ hoofdprocesId }) });
+
 // --- Indicatoren bibliotheek ---
 export const getAlleIndicatoren = () => request<Indicator[]>('/indicatoren');
 export const createIndicator = (body: IndicatorCreate) => request<number>('/indicatoren', { method: 'POST', body: JSON.stringify(body) });
@@ -126,3 +143,12 @@ export interface DomeinCreate { naam: string; omschrijving: string; basisperiode
 export interface ZaaksoortCreate { naam: string; omschrijving: string; icoon?: string; behandeling?: string; }
 export interface IndicatorCreate { naam: string; type: string; eenheid: string; aggregatiewijze: string; }
 export interface PeriodeCreate { startdatum: string; einddatum: string; type: string; }
+export interface Product { id: number; domeinId: number; naam: string; omschrijving: string; actief: boolean; }
+export interface ProductCreate { naam: string; omschrijving?: string; }
+export interface Proces { id: number; domeinId: number; naam: string; omschrijving: string; volgorde: number; actief: boolean; }
+export interface ProcesCreate { naam: string; omschrijving?: string; volgorde?: number; }
+export interface ScopeRegel { id: number; zaaksoortId: number; productId: number; procesId: number; type: 'verplicht' | 'optioneel'; frequentiePeriode?: string; frequentie?: number; }
+export interface ScopeZaaksoort { id: number; naam: string; icoon?: string; behandeling?: string; hoofdprocesId?: number; }
+export interface ScopeMatrix { producten: Product[]; processen: Proces[]; scopes: ScopeRegel[]; zaaksoorten: ScopeZaaksoort[]; }
+export interface ScopeCreate { zaaksoortId: number; productId: number; procesId: number; type: string; frequentiePeriode?: string; frequentie?: number; }
+export interface ScopeUpdate { type: string; frequentiePeriode?: string; frequentie?: number; }
