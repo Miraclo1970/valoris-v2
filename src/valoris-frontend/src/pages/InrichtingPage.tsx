@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   getZaaksoorten, getIndicatoren, getAlleIndicatoren, koppelIndicator,
@@ -73,7 +73,7 @@ export function InrichtingPage() {
   // Drag-and-drop volgorde
   const [dragId, setDragId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
-  const dragNode = useRef<HTMLDivElement | null>(null);
+
 
   const [fout, setFout] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

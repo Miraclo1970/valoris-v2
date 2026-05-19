@@ -19,7 +19,6 @@ interface KlantreisStripProps {
   onDragOver?: (e: React.DragEvent, id: number) => void;
   onDrop?: (e: React.DragEvent, id: number) => void;
   onDragEnd?: () => void;
-  dragNodeRef?: (id: number) => React.RefObject<HTMLDivElement> | null;
   onEditZaaksoort?: (z: Zaaksoort, e: React.MouseEvent) => void;
 }
 
@@ -28,7 +27,7 @@ export function KlantreisStrip({
   selectedId, onSelect,
   selectedIds, onToggle,
   onAdd,
-  dragId, dragOverId, onDragStart, onDragOver, onDrop, onDragEnd, dragNodeRef,
+  dragId, dragOverId, onDragStart, onDragOver, onDrop, onDragEnd,
   onEditZaaksoort,
 }: KlantreisStripProps) {
   const multiSelect = !!onToggle;
