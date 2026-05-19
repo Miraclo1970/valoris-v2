@@ -125,12 +125,12 @@ public class ValorisDbContext : DbContext
             .WithMany(d => d.Processen)
             .HasForeignKey(p => p.DomeinId);
 
-        // Zaaksoort.Hoofdproces FK (optional, no cascade — avoid multiple cascade paths)
+        // Zaaksoort.Hoofdproces FK — NoAction to avoid multiple cascade paths (SQL Server restriction)
         modelBuilder.Entity<Zaaksoort>()
             .HasOne(z => z.Hoofdproces)
             .WithMany(p => p.HoofdZaaksoorten)
             .HasForeignKey(z => z.HoofdprocesId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
 
         // ZaaksoortScope FK's
         modelBuilder.Entity<ZaaksoortScope>()

@@ -146,7 +146,7 @@ namespace Valoris.Api.Migrations
                 column: "HoofdprocesId",
                 principalTable: "Processen",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.NoAction);
         }
 
         /// <inheritdoc />
