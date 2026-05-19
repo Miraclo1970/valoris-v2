@@ -119,7 +119,7 @@ public class DoméinenController : ValorisController
             .Where(z => z.DomeinId == id && z.Actief)
             .OrderBy(z => z.Volgorde)
             .Select(z => new ZaaksoortDto(
-                z.Id, z.DomeinId, z.Naam, z.Omschrijving, z.Icoon, z.Behandeling, z.Volgorde, z.Actief))
+                z.Id, z.DomeinId, z.Naam, z.Omschrijving, z.Icoon, z.Behandeling, z.Volgorde, z.Actief, z.HoofdprocesId))
             .ToListAsync();
         return Ok(zaaksoorten);
     }

@@ -1,0 +1,218 @@
+.ks-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ks-label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Gegroepeerde strip (met processen) ── */
+.ks-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  scrollbar-width: none;
+}
+.ks-strip::-webkit-scrollbar { display: none; }
+
+.ks-groep {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.ks-groep-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ks-proces-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 10px 4px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: none;
+  white-space: nowrap;
+  margin-bottom: 0;
+}
+
+.ks-groep-chips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) var(--radius-sm);
+  min-width: 120px;
+}
+
+.ks-groep-arrow {
+  font-size: 1.4rem;
+  color: var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  margin-top: 28px; /* align with chips, below label */
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ── Platte strip (geen processen) ── */
+.ks-strip-plat {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+.ks-strip-plat::-webkit-scrollbar { display: none; }
+
+.ks-plat-item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.ks-arrow {
+  font-size: 1.2rem;
+  color: var(--color-border);
+  padding: 0 var(--space-2);
+  user-select: none;
+}
+
+/* ── Chip ── */
+.ks-chip-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.ks-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  transition: border-color 0.1s, background 0.1s, box-shadow 0.1s;
+  user-select: none;
+  min-width: 100px;
+}
+
+.ks-chip:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.ks-chip-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.ks-chip-dragging {
+  opacity: 0.4;
+}
+
+.ks-chip-dragover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.ks-drag-handle {
+  color: var(--color-border);
+  cursor: grab;
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ks-check {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+.ks-icoon {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ks-naam {
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.ks-behandeling {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-radius: 4px;
+  padding: 1px 5px;
+  line-height: 1.4;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.ks-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.1s;
+  flex-shrink: 0;
+}
+
+.ks-chip:hover .ks-edit-btn {
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ks-strip {
+    gap: 0;
+  }
+  .ks-naam {
+    max-width: 80px;
+  }
+}

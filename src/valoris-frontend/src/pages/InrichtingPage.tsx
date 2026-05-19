@@ -4,12 +4,13 @@ import {
   getZaaksoorten, getIndicatoren, getAlleIndicatoren, koppelIndicator,
   getMetingsdoelen, getMetingen,
   createMetingsdoel, updateMetingsdoel, createMeting, updateMeting,
-  getPeriodes, getDomeinen,
+  getPeriodes, getDomeinen, getProcessen,
   createZaaksoort, updateZaaksoort, herordZaaksoorten,
   type Zaaksoort, type DomeinIndicator, type Indicator, type Metingsdoel, type Meting,
-  type HuidigePeriode, type MetingsdoelCreate, type MetingsdoelUpdate, type ZaaksoortCreate,
+  type HuidigePeriode, type MetingsdoelCreate, type MetingsdoelUpdate, type ZaaksoortCreate, type Proces,
 } from '../api/client';
 import { Modal } from '../components/Modal';
+import { KlantreisStrip } from '../components/KlantreisStrip';
 import './InrichtingPage.css';
 
 const NORM_RICHTING = [
@@ -47,6 +48,7 @@ export function InrichtingPage() {
   const id = parseInt(domeinId!);
 
   const [zaaksoorten, setZaaksoorten] = useState<Zaaksoort[]>([]);
+  const [processen, setProcessen] = useState<Proces[]>([]);
   const [indicatoren, setIndicatoren] = useState<DomeinIndicator[]>([]);
   const [bibliotheek, setBibliotheek] = useState<Indicator[]>([]);
   const [metingsdoelen, setMetingsdoelen] = useState<Metingsdoel[]>([]);
@@ -77,7 +79,7 @@ export function InrichtingPage() {
   const [saving, setSaving] = useState(false);
 
   const laad = async () => {
-    const [domeinen, z, i, bib, m, mt, p] = await Promise.all([
+    const [domeinen, z, i, bib, m, mt, p, proc] = await Promise.all([
       getDomeinen(),
       getZaaksoorten(id),
       getIndicatoren(id),
@@ -85,6 +87,7 @@ export function InrichtingPage() {
       getMetingsdoelen(id),
       getMetingen(id),
       getPeriodes(id),
+      getProcessen(id),
     ]);
     const d = domeinen.find(x => x.id === id) ?? null;
     setZaaksoorten(z);
@@ -93,6 +96,7 @@ export function InrichtingPage() {
     setMetingsdoelen(m);
     setMetingen(mt);
     setAllePeriodes(p);
+    setProcessen(proc);
     if (d) setPeriodeType(d.basisperiode as PeriodeType);
     if (!selectedZaaksoortId && z.length > 0) setSelectedZaaksoortId(z[0].id);
   };
@@ -323,45 +327,20 @@ export function InrichtingPage() {
       )}
       {/* Klantreis strip */}
       <div className="ip-klantreis-wrap">
-        <div className="ip-klantreis-header">
-          <span className="ip-section-label">KLANTREIS (ZAAKSOORTEN)</span>
-          <button className="ip-add-sm-btn" onClick={openNieuwZaaksoort} title="Nieuwe zaaksoort">+ Zaaksoort</button>
-        </div>
-        <div className="ip-klantreis-strip">
-          {zaaksoorten.map((z, i) => (
-            <div
-              key={z.id}
-              className="ip-zaak-wrap"
-              draggable
-              ref={dragId === z.id ? dragNode : null}
-              onDragStart={e => handleDragStart(e, z.id)}
-              onDragOver={e => handleDragOver(e, z.id)}
-              onDrop={e => handleDrop(e, z.id)}
-              onDragEnd={handleDragEnd}
-            >
-              <div
-                className={[
-                  'ip-zaak-chip',
-                  selectedZaaksoortId === z.id ? 'selected' : '',
-                  dragId === z.id ? 'dragging' : '',
-                  dragOverId === z.id ? 'drag-over' : '',
-                ].filter(Boolean).join(' ')}
-                onClick={() => setSelectedZaaksoortId(z.id)}
-              >
-                <span className="ip-zaak-drag-handle" title="Slepen om te herordenen">⠿</span>
-                {z.icoon && <span className="ip-zaak-icoon">{z.icoon}</span>}
-                <span className="ip-zaak-naam">{z.naam}</span>
-                {z.behandeling && <span className="ip-zaak-behandeling">{z.behandeling}</span>}
-                <button
-                  className="ip-zaak-edit-btn"
-                  onClick={e => openBewerkZaaksoort(z, e)}
-                  title="Zaaksoort bewerken"
-                >✎</button>
-              </div>
-              {i < zaaksoorten.length - 1 && <span className="ip-zaak-arrow">›</span>}
-            </div>
-          ))}
-        </div>
+        <KlantreisStrip
+          zaaksoorten={zaaksoorten}
+          processen={processen}
+          selectedId={selectedZaaksoortId ?? undefined}
+          onSelect={setSelectedZaaksoortId}
+          onAdd={openNieuwZaaksoort}
+          dragId={dragId}
+          dragOverId={dragOverId}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragEnd={handleDragEnd}
+          onEditZaaksoort={openBewerkZaaksoort}
+        />
       </div>
 
       {!selectedZaaksoort ? (

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getStrategie, getPeriodes, type Strategie, type HuidigePeriode } from '../api/client';
+import { getStrategie, getPeriodes, getZaaksoorten, getProcessen, type Strategie, type HuidigePeriode, type Zaaksoort, type Proces } from '../api/client';
 import { MatrixChart } from '../components/MatrixChart';
+import { KlantreisStrip } from '../components/KlantreisStrip';
 import './StrategiePage.css';
 
 
@@ -26,11 +27,13 @@ export function StrategiePage() {
   const [strategie, setStrategie] = useState<Strategie | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [zaaksoorten, setZaaksoorten] = useState<Zaaksoort[]>([]);
+  const [processen, setProcessen] = useState<Proces[]>([]);
 
   useEffect(() => {
-    getPeriodes(id).then(ps => {
-      setPeriodes(ps);
-    }).catch(() => {});
+    getPeriodes(id).then(ps => setPeriodes(ps)).catch(() => {});
+    getZaaksoorten(id).then(setZaaksoorten).catch(() => {});
+    getProcessen(id).then(setProcessen).catch(() => {});
   }, [id]);
 
   useEffect(() => {
@@ -102,7 +105,7 @@ export function StrategiePage() {
       {/* Klantreis selector strip */}
       <div className="sp-selector-wrap">
         <div className="sp-selector-header">
-          <span className="sp-section-label">ZAAKSOORTEN</span>
+          <span className="sp-selector-count">{selectedIds.length} geselecteerd</span>
           <div className="sp-selector-right">
             {periodes.length > 0 && (
               <select
@@ -116,33 +119,14 @@ export function StrategiePage() {
                 ))}
               </select>
             )}
-            <span className="sp-selector-count">{selectedIds.length} geselecteerd</span>
           </div>
         </div>
-        <div className="sp-selector-strip">
-          {strategie.zaaksoorten.map((z, i) => {
-            const isSelected = selectedIds.includes(z.zaaksoortId);
-            return (
-              <div key={z.zaaksoortId} className="sp-zaak-wrap">
-                <div
-                  className={`sp-zaak-chip ${isSelected ? 'selected' : ''}`}
-                  onClick={() => toggleSelectie(z.zaaksoortId)}
-                >
-                  <input
-                    type="checkbox"
-                    className="sp-zaak-check"
-                    checked={isSelected}
-                    readOnly
-                  />
-                  {z.icoon && <span className="sp-zaak-icoon">{z.icoon}</span>}
-                  <span className="sp-zaak-naam">{z.zaaksoortNaam}</span>
-                  {z.behandeling && <span className="sp-zaak-behandeling">{z.behandeling}</span>}
-                </div>
-                {i < strategie.zaaksoorten.length - 1 && <span className="sp-zaak-arrow">›</span>}
-              </div>
-            );
-          })}
-        </div>
+        <KlantreisStrip
+          zaaksoorten={zaaksoorten}
+          processen={processen}
+          selectedIds={selectedIds}
+          onToggle={toggleSelectie}
+        />
       </div>
 
       {/* Driekoloms: indicatoren | matrix | geselecteerd */}

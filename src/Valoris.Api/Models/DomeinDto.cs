@@ -16,7 +16,8 @@ public record ZaaksoortDto(
     string? Icoon,
     string? Behandeling,
     int Volgorde,
-    bool Actief);
+    bool Actief,
+    int? HoofdprocesId);
 
 public record IndicatorDto(
     int Id,

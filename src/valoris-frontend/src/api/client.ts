@@ -117,7 +117,7 @@ export const updateIndicator = (id: number, body: IndicatorCreate) => request<vo
 
 // --- Types ---
 export interface Domein { id: number; naam: string; omschrijving: string; basisperiode: string; interventiedrempel: number; actief: boolean; }
-export interface Zaaksoort { id: number; domeinId: number; naam: string; omschrijving: string; icoon?: string; behandeling?: string; volgorde: number; actief: boolean; }
+export interface Zaaksoort { id: number; domeinId: number; naam: string; omschrijving: string; icoon?: string; behandeling?: string; volgorde: number; actief: boolean; hoofdprocesId?: number; }
 export interface DomeinIndicator { id: number; domeinId: number; indicatorId: number; indicatorNaam: string; type: string; eenheid: string; aggregatiewijze: string; actief: boolean; }
 export interface Metingsdoel { id: number; domeinIndicatorId: number; zaaksoortId: number; zaaksoortNaam: string; indicatorNaam: string; normWaarde: number; normRichting: string; gewicht: number; actief: boolean; }
 export interface MetingsdoelCreate { domeinIndicatorId: number; zaaksoortId: number; normWaarde: number; normRichting: string; gewicht: number; }
