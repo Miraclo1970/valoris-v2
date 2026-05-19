@@ -259,10 +259,27 @@ export function ScopePage() {
           title={productModal === 'nieuw' ? 'Nieuw product' : `Bewerken — ${(productModal as Product).naam}`}
           onClose={() => setProductModal(null)}
           footer={
-            <>
-              <button className="btn-secondary" onClick={() => setProductModal(null)} disabled={saving}>Annuleren</button>
-              <button className="btn-primary" onClick={slaProductOp} disabled={saving || !productForm.naam}>{saving ? 'Bezig…' : 'Opslaan'}</button>
-            </>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              {productModal !== 'nieuw' && (
+                <button
+                  className="btn-secondary"
+                  style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                  disabled={saving}
+                  title="Verberg dit product — het blijft bewaard maar verschijnt niet meer in de matrix"
+                  onClick={async () => {
+                    await updateProduct(id, (productModal as Product).id, { naam: productForm.naam, actief: false });
+                    setProductModal(null);
+                    laad();
+                  }}
+                >
+                  Verbergen
+                </button>
+              )}
+              <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+                <button className="btn-secondary" onClick={() => setProductModal(null)} disabled={saving}>Annuleren</button>
+                <button className="btn-primary" onClick={slaProductOp} disabled={saving || !productForm.naam}>{saving ? 'Bezig…' : 'Opslaan'}</button>
+              </div>
+            </div>
           }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -274,17 +291,6 @@ export function ScopePage() {
               <label>Omschrijving</label>
               <input value={productForm.omschrijving} onChange={e => setProductForm(f => ({ ...f, omschrijving: e.target.value }))} placeholder="Optioneel" />
             </div>
-            {productModal !== 'nieuw' && (
-              <div className="form-row">
-                <label style={{ color: 'var(--color-danger)', fontSize: 12 }}>
-                  Deactiveren
-                </label>
-                <button className="btn-secondary" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
-                  onClick={async () => { await updateProduct(id, (productModal as Product).id, { naam: productForm.naam, actief: false }); setProductModal(null); laad(); }}>
-                  Deactiveren
-                </button>
-              </div>
-            )}
           </div>
         </Modal>
       )}
@@ -295,10 +301,27 @@ export function ScopePage() {
           title={procesModal === 'nieuw' ? 'Nieuw proces' : `Bewerken — ${(procesModal as Proces).naam}`}
           onClose={() => setProcesModal(null)}
           footer={
-            <>
-              <button className="btn-secondary" onClick={() => setProcesModal(null)} disabled={saving}>Annuleren</button>
-              <button className="btn-primary" onClick={slaProcesOp} disabled={saving || !procesForm.naam}>{saving ? 'Bezig…' : 'Opslaan'}</button>
-            </>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              {procesModal !== 'nieuw' && (
+                <button
+                  className="btn-secondary"
+                  style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                  disabled={saving}
+                  title="Verberg dit proces — het blijft bewaard maar verschijnt niet meer in de matrix"
+                  onClick={async () => {
+                    await updateProces(id, (procesModal as Proces).id, { naam: procesForm.naam, actief: false });
+                    setProcesModal(null);
+                    laad();
+                  }}
+                >
+                  Verbergen
+                </button>
+              )}
+              <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+                <button className="btn-secondary" onClick={() => setProcesModal(null)} disabled={saving}>Annuleren</button>
+                <button className="btn-primary" onClick={slaProcesOp} disabled={saving || !procesForm.naam}>{saving ? 'Bezig…' : 'Opslaan'}</button>
+              </div>
+            </div>
           }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
